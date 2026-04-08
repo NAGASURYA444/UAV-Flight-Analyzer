@@ -1,0 +1,111 @@
+# ============================================================================
+# DEFAULT MULTIROTOR PROFILE
+# ============================================================================
+# Applies to: Quadcopter, Hexacopter, Octocopter, Tricopter (any multirotor)
+#
+# These are conservative, type-appropriate defaults used when no fleet-specific
+# profile is supplied.  Motor channels and battery cell count are auto-detected
+# from the log and will override the values here at runtime.
+#
+# HOW TO CREATE YOUR FLEET PROFILE:
+#   1. Copy this file to profiles/MY_DRONE_001.yaml
+#   2. Fill in values from your actual airframe specs and test data
+#   3. Run: python cli.py analyze flight.bin --profile profiles/MY_DRONE_001.yaml
+# ============================================================================
+
+id: "multirotor-default"
+name: "Multirotor"
+type: multirotor               # multirotor | fixed_wing | vtol
+
+# ── Operational Expectations ─────────────────────────────────────────────────
+# Set these from your actual test flights for accurate endurance scoring.
+expected_endurance_min: 15     # Conservative default — update from test flights
+expected_range_km: 5.0         # Typical short-range survey/inspection range
+max_payload_kg: 1.0            # Default payload capacity
+max_speed_ms: 15.0             # Typical multirotor cruise speed (m/s)
+max_altitude_m: 120.0          # Regulatory limit (adjust per local rules)
+
+# ── Battery Configuration ─────────────────────────────────────────────────────
+# cell_count is auto-detected from log voltage at runtime.
+# Update capacity_mah and max_continuous_current_a from your battery spec sheet.
+battery:
+  capacity_mah: 5000           # Update to your actual pack capacity
+  cell_count: 4                # Auto-detected from log — this is the fallback
+  nominal_voltage: 14.8        # 4S nominal (auto-updated when cell count detected)
+  full_voltage: 16.8           # 4S full charge (auto-updated when cell count detected)
+  min_cell_voltage: 3.5        # Warning threshold per cell — land at or above this
+  critical_cell_voltage: 3.3   # Failsafe threshold — risk of cell damage below this
+  max_continuous_current_a: 40.0  # Update from battery C-rating × capacity
+  cycles_lifespan: 300         # Typical LiPo cycle life before retirement
+
+# ── Motor / ESC Configuration ─────────────────────────────────────────────────
+# channels and count are auto-detected from RCOU in the log.
+# PWM values and throttle thresholds are standard for most ESC configurations.
+motors:
+  count: 4                     # Auto-detected from log — this is the fallback
+  channels: [1, 2, 3, 4]      # Auto-detected from log — this is the fallback
+  max_pwm: 2000                # Standard ESC max PWM (µs)
+  min_pwm: 1000                # Standard ESC min PWM (µs)
+  hover_throttle_pct: 50       # Typical hover throttle — update from hover tests
+  high_throttle_warn_pct: 80   # Above this sustained = overload warning
+  high_throttle_critical_pct: 92  # Above this sustained = critical (loss of headroom)
+
+# ── Vibration Thresholds ──────────────────────────────────────────────────────
+# Multirotors are sensitive to vibration — lower thresholds than fixed-wing.
+# Tighten warn_threshold after a known-good baseline flight.
+vibration:
+  warn_threshold: 15.0         # m/s² mean — investigate prop balance / mounts
+  critical_threshold: 30.0     # m/s² mean — ground the drone immediately
+  clip_warn_per_min: 5         # IMU clipping events/min before warning
+
+# ── GPS / Navigation ──────────────────────────────────────────────────────────
+# Multirotors hover — they need better GPS than fast fixed-wing aircraft.
+gps:
+  min_satellites: 8            # Minimum acceptable satellite count
+  max_hdop: 1.5                # Maximum acceptable HDOP (lower = better)
+  min_fix_type: 3              # 3 = 3D Fix, 4 = DGPS, 6 = RTK Fixed
+  max_position_jump_m: 10.0    # Hover/slow flight: tight GPS jump tolerance
+
+# ── Maintenance Schedule ──────────────────────────────────────────────────────
+# Update intervals from your manufacturer specs and operational experience.
+maintenance:
+  motor_hours: 200             # Motor inspection/replacement interval (hours)
+  prop_cycles: 100             # Propeller replacement interval (flight cycles)
+  battery_cycles: 300          # Battery retirement threshold (charge cycles)
+  esc_hours: 200               # ESC inspection interval (hours)
+  frame_inspection_hours: 50   # Structural inspection interval (hours)
+
+# ── Scoring Weights ───────────────────────────────────────────────────────────
+# Weights reflect the relative importance of each module for multirotor health.
+# Battery and sensors are most critical; efficiency and airspeed less so.
+# Must sum to 1.0
+scoring_weights:
+  battery: 0.11
+  motors: 0.08
+  flight_overview: 0.10
+  sensors: 0.09
+  vibration: 0.06
+  control: 0.06
+  efficiency: 0.04
+  rc_link: 0.05
+  landing_wind: 0.06
+  fc_health: 0.04
+  mission: 0.06
+  airspeed: 0.04
+  pid_tuning: 0.05
+  power_rail: 0.04
+  telemetry: 0.04
+  esc_telemetry: 0.04
+  altitude_control: 0.04
+
+# ── Threshold Overrides ───────────────────────────────────────────────────────
+# Uncomment to override module defaults for this profile.
+# thresholds:
+#   ctl_rms_warn_deg: 1.5         # Roll/Pitch RMS warning (default: 1.5°)
+#   ctl_rms_critical_deg: 3.5     # Roll/Pitch RMS critical (default: 3.5°)
+#   ctl_large_error_deg: 5.0      # Large attitude error threshold (default: 5.0°)
+#   ctl_large_error_pct: 5.0      # % of flight with large error allowed (default: 5%)
+#   ctl_osc_rms_warn: 2.0         # Oscillation RMS warning (default: 2.0°)
+#   ctl_osc_rms_crit: 4.0         # Oscillation RMS critical (default: 4.0°)
+#   mot_sat_warn_pct: 5.0         # Motor saturation warning % (default: 5%)
+#   mot_sat_crit_pct: 15.0        # Motor saturation critical % (default: 15%)

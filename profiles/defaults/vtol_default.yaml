@@ -1,0 +1,120 @@
+# ============================================================================
+# DEFAULT VTOL / QUADPLANE PROFILE
+# ============================================================================
+# Applies to: QuadPlane, Tilt-rotor, Tailsitter, and any hybrid VTOL aircraft
+# running ArduPlane firmware with VTOL lift motors.
+#
+# These are conservative, type-appropriate defaults used when no fleet-specific
+# profile is supplied.  Motor channels and battery cell count are auto-detected
+# from the log and will override the values here at runtime.
+#
+# HOW TO CREATE YOUR FLEET PROFILE:
+#   1. Copy this file to profiles/MY_VTOL_001.yaml
+#   2. Fill in values from your actual airframe specs and test data
+#   3. Run: python cli.py analyze flight.bin --profile profiles/MY_VTOL_001.yaml
+# ============================================================================
+
+id: "vtol-default"
+name: "VTOL / QuadPlane"
+type: vtol                     # multirotor | fixed_wing | vtol
+
+# ── Operational Expectations ─────────────────────────────────────────────────
+# VTOL aircraft combine hover efficiency with fixed-wing cruise range.
+# Set expected_endurance_min from a full mission test (hover + cruise + hover).
+expected_endurance_min: 45     # Conservative default — update from test missions
+expected_range_km: 30.0        # Typical VTOL operational range
+max_payload_kg: 1.5            # Default payload capacity
+max_speed_ms: 25.0             # Typical VTOL cruise speed (m/s)
+max_altitude_m: 150.0          # VTOL survey aircraft often fly higher
+
+# ── Battery Configuration ─────────────────────────────────────────────────────
+# cell_count is auto-detected from log voltage at runtime.
+# VTOL hover draws high peak current — ensure battery is rated accordingly.
+battery:
+  capacity_mah: 10000          # VTOL needs larger packs — update from your spec
+  cell_count: 6                # Auto-detected from log — this is the fallback
+  nominal_voltage: 22.2        # 6S nominal (auto-updated when cell count detected)
+  full_voltage: 25.2           # 6S full charge (auto-updated when cell count detected)
+  min_cell_voltage: 3.5        # Warning threshold per cell
+  critical_cell_voltage: 3.3   # Failsafe threshold — risk of cell damage below this
+  max_continuous_current_a: 60.0  # VTOL hover draws significant current — update from spec
+  cycles_lifespan: 300         # Typical LiPo cycle life before retirement
+
+# ── Motor / ESC Configuration ─────────────────────────────────────────────────
+# VTOL has lift motors (hover) plus a pusher/tractor motor (cruise).
+# channels and count are auto-detected from RCOU in the log.
+# Default channels C5-C8 reflect common QuadPlane lift motor assignments;
+# C3 is the typical pusher throttle — may be combined or separate.
+motors:
+  count: 4                     # Auto-detected from log — this is the fallback
+  channels: [5, 6, 7, 8]      # Auto-detected from log — common QuadPlane lift motors
+  max_pwm: 2000                # Standard ESC max PWM (µs)
+  min_pwm: 1000                # Standard ESC min PWM (µs)
+  hover_throttle_pct: 55       # VTOL hover typically needs more throttle than pure quad
+  high_throttle_warn_pct: 80   # Above this sustained = overload during hover
+  high_throttle_critical_pct: 92  # Above this sustained = critical
+
+# ── Vibration Thresholds ──────────────────────────────────────────────────────
+# VTOL: stricter than fixed-wing (has lift motors); looser than pure multirotor
+# (fuselage/wing mass damps vibration more than a naked multirotor frame).
+vibration:
+  warn_threshold: 15.0         # m/s² mean — investigate if above this
+  critical_threshold: 30.0     # m/s² mean — ground the aircraft
+  clip_warn_per_min: 5         # IMU clipping events/min before warning
+
+# ── GPS / Navigation ──────────────────────────────────────────────────────────
+# VTOL operates in both hover (tight GPS needed) and cruise (faster movement).
+gps:
+  min_satellites: 8            # Minimum acceptable satellite count
+  max_hdop: 1.5                # Maximum acceptable HDOP
+  min_fix_type: 3              # 3 = 3D Fix, 4 = DGPS, 6 = RTK Fixed
+  max_position_jump_m: 15.0    # Moderate tolerance — fast cruise creates larger GPS steps
+
+# ── Maintenance Schedule ──────────────────────────────────────────────────────
+# VTOL components experience mixed loads — hover stress on lift motors,
+# cruise stress on airframe and pusher motor.
+maintenance:
+  motor_hours: 200             # Lift motor inspection interval (hours)
+  prop_cycles: 150             # Propeller replacement interval (flight cycles)
+  battery_cycles: 300          # Battery retirement threshold (charge cycles)
+  esc_hours: 200               # ESC inspection interval (hours)
+  frame_inspection_hours: 50   # Structural inspection interval (hours)
+
+# ── Scoring Weights ───────────────────────────────────────────────────────────
+# VTOL: VTOL transition quality is a unique and important module.
+# Airspeed health matters more than pure multirotor (has fixed-wing cruise phase).
+# Battery weight slightly lower — VTOL is designed for efficiency in cruise.
+# Must sum to 1.0
+scoring_weights:
+  battery: 0.09
+  motors: 0.07
+  flight_overview: 0.10
+  sensors: 0.09
+  vibration: 0.04
+  control: 0.06
+  efficiency: 0.04
+  rc_link: 0.05
+  landing_wind: 0.05
+  fc_health: 0.04
+  vtol_transition: 0.06
+  mission: 0.05
+  airspeed: 0.05
+  pid_tuning: 0.05
+  power_rail: 0.04
+  telemetry: 0.04
+  esc_telemetry: 0.04
+  altitude_control: 0.04
+
+# ── Threshold Overrides ───────────────────────────────────────────────────────
+# Uncomment to override module defaults for this profile.
+# thresholds:
+#   ctl_rms_warn_deg: 3.0         # Roll/Pitch RMS warning (VTOL default: 3.0°)
+#   ctl_rms_critical_deg: 6.0     # Roll/Pitch RMS critical (VTOL default: 6.0°)
+#   ctl_large_error_deg: 8.0      # Large attitude error threshold (default: 8.0°)
+#   ctl_large_error_pct: 5.0      # % of flight with large error allowed (default: 5%)
+#   ctl_osc_rms_warn: 4.0         # Oscillation RMS warning (default: 4.0°)
+#   ctl_osc_rms_crit: 7.0         # Oscillation RMS critical (default: 7.0°)
+#   mot_sat_warn_pct: 5.0         # Motor saturation warning % (default: 5%)
+#   mot_sat_crit_pct: 15.0        # Motor saturation critical % (default: 15%)
+#   vtr_alt_loss_warn_m: 2.0      # VTOL transition altitude loss warning (default: 2m)
+#   vtr_att_spike_warn_deg: 20.0  # VTOL transition attitude spike warning (default: 20°)

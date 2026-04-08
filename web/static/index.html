@@ -1,0 +1,1437 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>UAV Flight Analyzer</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+:root {
+  --bg:        #0d0d15;
+  --surface:   #13131e;
+  --surface2:  #191926;
+  --surface3:  #1f1f2e;
+  --border:    #2a2a40;
+  --border2:   #353550;
+  --accent:    #7b8cde;
+  --accent2:   #5c6bc0;
+  --accent-glow: rgba(123,140,222,0.18);
+  --text:      #e4e6f0;
+  --text-dim:  #5a5f7a;
+  --text-mid:  #9095b0;
+  --green:     #22c55e;
+  --yellow:    #f59e0b;
+  --red:       #ef4444;
+  --orange:    #f97316;
+  --purple:    #a78bfa;
+  --radius:    10px;
+  --radius-sm: 6px;
+  --shadow:    0 4px 24px rgba(0,0,0,0.55);
+  --shadow-sm: 0 2px 10px rgba(0,0,0,0.4);
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: var(--bg); color: var(--text); font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; font-size: 14px; min-height: 100vh; line-height: 1.5; }
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: var(--bg); }
+::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; }
+
+/* ── Animations ── */
+@keyframes fadeIn  { from { opacity:0; transform:translateY(6px); } to { opacity:1; transform:translateY(0); } }
+@keyframes slideUp { from { opacity:0; transform:translateY(14px); } to { opacity:1; transform:translateY(0); } }
+@keyframes spin    { to { transform:rotate(360deg); } }
+@keyframes toastIn { from { opacity:0; transform:translateX(60px); } to { opacity:1; transform:translateX(0); } }
+@keyframes toastOut{ to   { opacity:0; transform:translateX(60px); } }
+@keyframes skeletonPulse { 0%,100% { opacity:.4; } 50% { opacity:.7; } }
+
+/* ── Header ── */
+header { background:var(--surface); border-bottom:1px solid var(--border); padding:0 28px; display:flex; align-items:center; gap:14px; height:58px; box-shadow:var(--shadow-sm); position:sticky; top:0; z-index:100; }
+header .logo { font-size:17px; font-weight:700; color:var(--text); letter-spacing:-0.3px; display:flex; align-items:center; gap:9px; }
+header .logo-icon { width:28px; height:28px; background:linear-gradient(135deg,var(--accent2),var(--accent)); border-radius:7px; display:flex; align-items:center; justify-content:center; font-size:14px; }
+
+/* ── Tabs ── */
+.tabs { display:flex; background:var(--surface); border-bottom:1px solid var(--border); padding:0 28px; }
+.tab-btn { padding:15px 26px; border:none; background:none; color:var(--text-dim); font-size:13px; font-weight:500; cursor:pointer; border-bottom:2px solid transparent; transition:color .2s,border-color .2s; letter-spacing:.1px; }
+.tab-btn:hover { color:var(--text-mid); }
+.tab-btn.active { color:var(--text); border-bottom-color:var(--accent); }
+.tab-content { display:none; animation:fadeIn .3s ease; }
+.tab-content.active { display:block; }
+.container { max-width:1160px; margin:0 auto; padding:28px 24px; }
+
+/* ── Cards ── */
+.card { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:22px; margin-bottom:16px; box-shadow:var(--shadow-sm); animation:slideUp .3s ease; transition:border-color .25s; }
+.card:hover { border-color:var(--border2); }
+.card-title { font-size:11px; font-weight:700; color:var(--text-dim); text-transform:uppercase; letter-spacing:.8px; margin-bottom:16px; }
+
+/* ── Stat cards (fleet summary) ── */
+.stat-cards { display:grid; grid-template-columns:repeat(4,1fr); gap:12px; margin-bottom:20px; }
+@media(max-width:700px){ .stat-cards { grid-template-columns:repeat(2,1fr); } }
+.stat-card { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:18px 20px; }
+.stat-card .stat-label { font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:.8px; color:var(--text-dim); margin-bottom:6px; }
+.stat-card .stat-value { font-size:28px; font-weight:800; color:var(--text); line-height:1; }
+.stat-card .stat-sub { font-size:11px; color:var(--text-dim); margin-top:4px; }
+.stat-card.stat-warn .stat-value { color:var(--yellow); }
+.stat-card.stat-crit .stat-value { color:var(--red); }
+.stat-card.stat-good .stat-value { color:var(--green); }
+.stat-card.stat-accent .stat-value { color:var(--accent); }
+
+/* ── Recent analyses strip ── */
+.recent-wrap { margin-bottom:16px; }
+.recent-strip { display:flex; gap:10px; overflow-x:auto; padding-bottom:4px; }
+.recent-item { flex-shrink:0; display:flex; align-items:center; gap:10px; background:var(--surface2); border:1px solid var(--border); border-radius:var(--radius-sm); padding:10px 14px; cursor:pointer; transition:all .2s; min-width:180px; }
+.recent-item:hover { border-color:var(--accent); background:var(--surface3); }
+.recent-info { flex:1; min-width:0; }
+.recent-drone { font-size:13px; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.recent-file  { font-size:11px; color:var(--text-dim); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.recent-score { font-size:13px; font-weight:700; color:var(--text-mid); flex-shrink:0; }
+
+/* ── Upload zone ── */
+.upload-zone { border:2px dashed var(--border2); border-radius:var(--radius); padding:40px 32px; text-align:center; cursor:pointer; transition:all .25s ease; background:var(--surface2); }
+.upload-zone:hover, .upload-zone.drag-over { border-color:var(--accent); background:var(--accent-glow); transform:scale(1.004); }
+.upload-zone .icon { font-size:36px; margin-bottom:10px; line-height:1; }
+.upload-zone .hint { color:var(--text-dim); font-size:12px; margin-top:6px; }
+.upload-zone.has-file { border-color:var(--green); background:rgba(34,197,94,.05); }
+.file-name { color:var(--green); font-weight:600; font-size:14px; margin-top:6px; }
+
+/* ── Form ── */
+.form-row { display:grid; grid-template-columns:1fr 1fr; gap:20px; margin-bottom:18px; }
+@media(max-width:640px){ .form-row { grid-template-columns:1fr; } }
+.field label { display:block; font-size:11px; font-weight:600; color:var(--text-dim); text-transform:uppercase; letter-spacing:.5px; margin-bottom:7px; }
+.field input, .field select { width:100%; background:var(--surface2); border:1px solid var(--border2); color:var(--text); border-radius:var(--radius-sm); padding:9px 12px; font-size:13px; outline:none; transition:border-color .2s,box-shadow .2s; }
+.field input:focus, .field select:focus { border-color:var(--accent); box-shadow:0 0 0 3px rgba(123,140,222,.1); }
+.field input[readonly] { opacity:.5; cursor:not-allowed; }
+
+/* ── Vehicle selector ── */
+.vehicle-selector { display:flex; flex-direction:column; gap:10px; }
+.vehicle-categories { display:flex; background:var(--surface2); border:1px solid var(--border); border-radius:10px; padding:4px; gap:3px; }
+.vcat-btn { flex:1; padding:10px 8px; border:none; border-radius:7px; background:transparent; color:var(--text-dim); cursor:pointer; text-align:center; font-size:12px; font-weight:500; transition:all .22s ease; user-select:none; }
+.vcat-btn:hover { color:var(--text-mid); background:var(--surface3); }
+.vcat-btn.selected { background:var(--surface3); color:var(--text); box-shadow:0 1px 8px rgba(0,0,0,.4),inset 0 0 0 1px var(--border2); }
+.vcat-btn.selected .vcat-icon { filter:drop-shadow(0 0 6px rgba(123,140,222,.5)); }
+.vcat-icon { font-size:20px; display:block; margin-bottom:4px; line-height:1.2; transition:filter .2s; }
+.vcat-label { font-size:11px; font-weight:600; letter-spacing:.3px; text-transform:uppercase; }
+.vehicle-subtypes { display:none; gap:8px; padding:10px; background:var(--surface2); border:1px solid var(--border); border-radius:8px; animation:fadeIn .2s ease; }
+.vehicle-subtypes.visible { display:flex; }
+.vsub-btn { flex:1; padding:10px 8px; border:1px solid var(--border); border-radius:7px; background:var(--surface); color:var(--text-dim); cursor:pointer; text-align:center; transition:all .2s; user-select:none; }
+.vsub-btn:hover { border-color:var(--border2); color:var(--text-mid); background:var(--surface3); }
+.vsub-btn.selected { border-color:var(--accent2); background:rgba(123,140,222,.1); color:var(--text); box-shadow:0 0 0 1px rgba(123,140,222,.25),0 2px 10px rgba(123,140,222,.1); }
+.vsub-name { font-size:13px; font-weight:600; }
+.vsub-detail { font-size:10px; color:var(--text-dim); display:block; margin-top:3px; text-transform:uppercase; letter-spacing:.2px; }
+
+/* ── Profile settings ── */
+.collapse-toggle { display:flex; align-items:center; gap:9px; cursor:pointer; color:var(--text-dim); font-size:13px; font-weight:500; padding:10px 0; user-select:none; transition:color .2s; }
+.collapse-toggle:hover { color:var(--text-mid); }
+.collapse-arrow { transition:transform .2s ease; display:inline-block; font-size:10px; }
+.collapse-arrow.open { transform:rotate(90deg); }
+.profile-fields { display:none; padding-top:12px; }
+.profile-fields.open { display:block; animation:fadeIn .25s ease; }
+.profile-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:12px; }
+@media(max-width:640px){ .profile-grid { grid-template-columns:repeat(2,1fr); } }
+.profile-section-title { grid-column:1/-1; font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:1px; color:var(--accent); padding:12px 0 6px; border-bottom:1px solid var(--border2); margin-bottom:4px; display:flex; align-items:center; gap:8px; }
+.profile-section-title::before { content:''; width:3px; height:13px; background:linear-gradient(180deg,var(--accent2),var(--accent)); border-radius:2px; flex-shrink:0; }
+.profile-section-title:first-child { padding-top:4px; }
+.preset-bar { display:flex; gap:8px; align-items:center; margin-bottom:10px; flex-wrap:wrap; }
+.preset-bar label { font-size:11px; color:var(--text-dim); font-weight:600; text-transform:uppercase; letter-spacing:.5px; }
+
+/* ── Buttons ── */
+.btn { display:inline-flex; align-items:center; gap:7px; padding:10px 22px; border:none; border-radius:var(--radius-sm); font-size:13px; font-weight:600; cursor:pointer; transition:all .2s ease; letter-spacing:.1px; }
+.btn-primary { background:linear-gradient(135deg,var(--accent2),var(--accent)); color:#fff; box-shadow:0 2px 12px rgba(92,107,192,.3); }
+.btn-primary:hover:not(:disabled) { background:linear-gradient(135deg,var(--accent),#99a8ee); box-shadow:0 4px 18px rgba(123,140,222,.4); transform:translateY(-1px); }
+.btn-primary:disabled { opacity:.5; cursor:not-allowed; transform:none; }
+.btn-secondary { background:var(--surface2); color:var(--text-mid); border:1px solid var(--border2); }
+.btn-secondary:hover { border-color:var(--accent); color:var(--text); background:var(--surface3); }
+.btn-sm  { padding:6px 14px; font-size:11px; }
+.btn-xs  { padding:4px 10px; font-size:11px; }
+.btn-green { background:var(--green); color:#fff; }
+.btn-green:hover { opacity:.88; transform:translateY(-1px); }
+.btn-danger { background:rgba(239,68,68,.15); color:var(--red); border:1px solid rgba(239,68,68,.3); }
+.btn-danger:hover { background:rgba(239,68,68,.25); }
+.run-btn { width:100%; justify-content:center; padding:15px; font-size:14px; letter-spacing:.3px; }
+
+/* ── Progress bar ── */
+.analyzing-bar { display:none; align-items:center; gap:14px; padding:16px 20px; background:var(--surface2); border:1px solid var(--border2); border-radius:var(--radius-sm); margin-top:14px; animation:fadeIn .3s ease; }
+.analyzing-bar.show { display:flex; flex-direction:column; align-items:stretch; }
+.progress-header { display:flex; align-items:center; gap:12px; }
+.spinner { width:18px; height:18px; border:2px solid var(--border2); border-top-color:var(--accent); border-radius:50%; animation:spin .75s linear infinite; flex-shrink:0; }
+.progress-track { height:4px; background:var(--border); border-radius:2px; margin-top:10px; overflow:hidden; }
+.progress-fill { height:100%; background:linear-gradient(90deg,var(--accent2),var(--accent)); border-radius:2px; width:0; transition:width .6s ease; }
+.progress-module { font-size:11px; color:var(--text-dim); margin-top:6px; }
+
+/* ── Score banner with ring ── */
+.score-banner { border-radius:var(--radius); padding:22px 26px; margin-bottom:16px; display:flex; align-items:center; gap:24px; animation:slideUp .35s ease; flex-wrap:wrap; }
+.score-banner.grade-A { background:linear-gradient(135deg,rgba(34,197,94,.13),rgba(34,197,94,.03)); border:1px solid rgba(34,197,94,.3); }
+.score-banner.grade-B { background:linear-gradient(135deg,rgba(123,140,222,.13),rgba(123,140,222,.03)); border:1px solid rgba(123,140,222,.3); }
+.score-banner.grade-C { background:linear-gradient(135deg,rgba(245,158,11,.13),rgba(245,158,11,.03)); border:1px solid rgba(245,158,11,.3); }
+.score-banner.grade-D { background:linear-gradient(135deg,rgba(249,115,22,.13),rgba(249,115,22,.03)); border:1px solid rgba(249,115,22,.3); }
+.score-banner.grade-F { background:linear-gradient(135deg,rgba(239,68,68,.13),rgba(239,68,68,.03)); border:1px solid rgba(239,68,68,.3); }
+.score-ring-wrap { position:relative; flex-shrink:0; width:80px; height:80px; }
+.score-ring-wrap svg { transform:rotate(-90deg); }
+.score-ring-bg   { fill:none; stroke:var(--border2); stroke-width:5; }
+.score-ring-fill { fill:none; stroke-width:5; stroke-linecap:round; stroke-dasharray:226.19; stroke-dashoffset:226.19; transition:stroke-dashoffset 1.2s cubic-bezier(.4,0,.2,1); }
+.grade-A .score-ring-fill { stroke:var(--green); }
+.grade-B .score-ring-fill { stroke:var(--accent); }
+.grade-C .score-ring-fill { stroke:var(--yellow); }
+.grade-D .score-ring-fill { stroke:var(--orange); }
+.grade-F .score-ring-fill { stroke:var(--red); }
+.score-ring-label { position:absolute; inset:0; display:flex; align-items:center; justify-content:center; font-size:22px; font-weight:800; }
+.grade-A .score-ring-label { color:var(--green); }
+.grade-B .score-ring-label { color:var(--accent); }
+.grade-C .score-ring-label { color:var(--yellow); }
+.grade-D .score-ring-label { color:var(--orange); }
+.grade-F .score-ring-label { color:var(--red); }
+.score-details .score-num { font-size:26px; font-weight:700; }
+.score-details .verdict  { font-size:14px; color:var(--text-mid); margin-top:2px; }
+.score-details .action   { font-size:12px; color:var(--text-dim); margin-top:4px; }
+.issue-pills { display:flex; gap:8px; margin-left:auto; flex-wrap:wrap; }
+.pill { padding:4px 12px; border-radius:20px; font-size:11px; font-weight:700; }
+.pill-red    { background:rgba(239,68,68,.18); color:var(--red); border:1px solid rgba(239,68,68,.3); }
+.pill-yellow { background:rgba(245,158,11,.18); color:var(--yellow); border:1px solid rgba(245,158,11,.3); }
+.pill-blue   { background:rgba(123,140,222,.12); color:var(--accent); border:1px solid rgba(123,140,222,.3); }
+
+/* ── Radar chart ── */
+.radar-wrap { display:flex; gap:16px; align-items:flex-start; margin-bottom:16px; flex-wrap:wrap; }
+.radar-card { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:20px; flex:0 0 300px; }
+@media(max-width:700px){ .radar-card { flex:1 1 100%; } }
+.radar-card canvas { height:260px !important; }
+
+/* ── Issues list ── */
+.issue-item { padding:10px 14px; border-radius:var(--radius-sm); margin-bottom:6px; border-left:3px solid; cursor:pointer; transition:background .15s; }
+.issue-item.critical { background:rgba(239,68,68,.07); border-color:var(--red); }
+.issue-item.warning  { background:rgba(245,158,11,.07); border-color:var(--yellow); }
+.issue-item.info     { background:rgba(123,140,222,.06); border-color:var(--accent); }
+.issue-item:hover    { filter:brightness(1.1); }
+.issue-code { font-size:10px; font-weight:700; letter-spacing:.5px; color:var(--text-dim); display:flex; justify-content:space-between; align-items:center; }
+.issue-msg  { font-size:13px; color:var(--text); margin-top:3px; }
+.issue-detail { display:none; margin-top:8px; padding-top:8px; border-top:1px solid var(--border); font-size:12px; color:var(--text-dim); }
+.issue-detail.open { display:block; animation:fadeIn .2s ease; }
+.issue-meta { display:flex; gap:14px; flex-wrap:wrap; margin-top:4px; }
+.issue-meta span { background:var(--surface2); padding:2px 8px; border-radius:4px; font-size:11px; }
+
+/* ── Module scores grid ── */
+.modules-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(145px,1fr)); gap:10px; }
+.module-card { background:var(--surface2); border-radius:var(--radius-sm); padding:13px; border:1px solid var(--border); transition:transform .2s,border-color .2s,box-shadow .2s; }
+.module-card:hover { transform:translateY(-2px); border-color:var(--border2); box-shadow:0 4px 14px rgba(0,0,0,.35); }
+.module-card .mod-name  { font-size:10px; color:var(--text-dim); text-transform:uppercase; letter-spacing:.4px; }
+.module-card .mod-score { font-size:22px; font-weight:700; margin-top:5px; }
+.module-card .mod-grade { font-size:10px; font-weight:600; margin-top:2px; }
+.mod-A{color:var(--green);} .mod-B{color:var(--accent);} .mod-C{color:var(--yellow);} .mod-D{color:var(--orange);} .mod-F{color:var(--red);} .mod-NA{color:var(--text-dim);}
+
+/* ── Fleet sub-tabs ── */
+.fleet-sub-nav { display:flex; gap:6px; margin-bottom:18px; background:var(--surface2); border:1px solid var(--border); border-radius:8px; padding:4px; width:fit-content; }
+.fleet-sub-btn { padding:8px 18px; border:none; border-radius:5px; background:transparent; color:var(--text-dim); font-size:12px; font-weight:600; cursor:pointer; transition:all .2s; letter-spacing:.2px; text-transform:uppercase; }
+.fleet-sub-btn:hover { color:var(--text-mid); }
+.fleet-sub-btn.active { background:var(--surface3); color:var(--text); box-shadow:inset 0 0 0 1px var(--border2); }
+.fleet-view { display:none; animation:fadeIn .25s ease; }
+.fleet-view.active { display:block; }
+
+/* ── Fleet search/sort ── */
+.fleet-toolbar { display:flex; align-items:center; gap:12px; margin-bottom:14px; flex-wrap:wrap; }
+.search-input { background:var(--surface2); border:1px solid var(--border2); color:var(--text); border-radius:var(--radius-sm); padding:8px 12px 8px 34px; font-size:13px; outline:none; transition:border-color .2s,box-shadow .2s; width:240px; }
+.search-input:focus { border-color:var(--accent); box-shadow:0 0 0 3px rgba(123,140,222,.1); }
+.search-wrap { position:relative; }
+.search-icon { position:absolute; left:10px; top:50%; transform:translateY(-50%); color:var(--text-dim); font-size:13px; pointer-events:none; }
+
+/* ── Fleet table ── */
+.fleet-table { width:100%; border-collapse:collapse; }
+.fleet-table th { text-align:left; padding:11px 14px; font-size:10px; font-weight:700; color:var(--text-dim); text-transform:uppercase; letter-spacing:.6px; border-bottom:1px solid var(--border); cursor:pointer; user-select:none; transition:color .2s; white-space:nowrap; }
+.fleet-table th:hover { color:var(--text-mid); }
+.fleet-table th.sorted { color:var(--accent); }
+.fleet-table td { padding:13px 14px; border-bottom:1px solid rgba(42,42,64,.8); vertical-align:middle; transition:background .15s; }
+.fleet-table tr.clickable { cursor:pointer; }
+.fleet-table tr.clickable:hover td { background:var(--surface2); }
+.fleet-table tr.expanded td { background:rgba(123,140,222,.04); }
+.sort-arrow { font-size:10px; margin-left:4px; opacity:.5; }
+.sorted .sort-arrow { opacity:1; color:var(--accent); }
+
+/* ── Maintenance calendar ── */
+.maint-grid { width:100%; border-collapse:collapse; }
+.maint-grid th { text-align:left; padding:10px 14px; font-size:10px; font-weight:700; color:var(--text-dim); text-transform:uppercase; letter-spacing:.6px; border-bottom:1px solid var(--border); white-space:nowrap; }
+.maint-grid td { padding:11px 14px; border-bottom:1px solid rgba(42,42,64,.6); }
+.maint-cell { display:inline-flex; align-items:center; gap:6px; padding:4px 10px; border-radius:20px; font-size:11px; font-weight:600; }
+.maint-ok   { background:rgba(34,197,94,.12); color:var(--green); }
+.maint-warn { background:rgba(245,158,11,.12); color:var(--yellow); }
+.maint-due  { background:rgba(239,68,68,.12); color:var(--red); }
+.maint-na   { background:var(--surface2); color:var(--text-dim); }
+.maint-hours { font-size:12px; color:var(--text-mid); }
+
+/* ── Comparison view ── */
+.compare-controls { display:flex; align-items:center; gap:10px; margin-bottom:16px; flex-wrap:wrap; }
+.compare-slot { background:var(--surface2); border:1px solid var(--border2); border-radius:var(--radius-sm); padding:10px 14px; min-width:160px; }
+.compare-slot .slot-label { font-size:10px; font-weight:700; text-transform:uppercase; color:var(--text-dim); letter-spacing:.5px; margin-bottom:4px; }
+.compare-slot .slot-val { font-size:13px; font-weight:600; }
+.compare-table { width:100%; border-collapse:collapse; }
+.compare-table th { padding:10px 14px; font-size:11px; font-weight:700; color:var(--text-dim); text-align:center; border-bottom:1px solid var(--border); }
+.compare-table th:first-child { text-align:left; }
+.compare-table td { padding:10px 14px; border-bottom:1px solid rgba(42,42,64,.6); text-align:center; font-size:13px; }
+.compare-table td:first-child { text-align:left; color:var(--text-dim); font-size:11px; text-transform:uppercase; letter-spacing:.4px; }
+.compare-better { color:var(--green); font-weight:700; }
+.compare-worse  { color:var(--red); font-weight:700; }
+
+/* ── Drone detail panel ── */
+.drone-detail { background:var(--surface2); border-radius:var(--radius); margin-top:8px; padding:22px; border:1px solid var(--border); animation:fadeIn .3s ease; }
+.detail-charts { display:grid; grid-template-columns:repeat(auto-fill,minmax(240px,1fr)); gap:16px; margin-bottom:22px; }
+.chart-card { background:var(--surface); border-radius:var(--radius-sm); padding:14px; border:1px solid var(--border); transition:border-color .2s; }
+.chart-card:hover { border-color:var(--border2); }
+.chart-card .chart-title { font-size:11px; font-weight:600; color:var(--text-dim); margin-bottom:10px; }
+.chart-card canvas { max-height:120px; }
+.alert-banner { background:rgba(239,68,68,.08); border:1px solid rgba(239,68,68,.25); border-radius:var(--radius-sm); padding:12px 16px; margin-bottom:16px; }
+.alert-banner h4 { color:var(--red); font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.5px; margin-bottom:8px; }
+.alert-item { color:var(--text); font-size:13px; padding:3px 0; }
+.alert-item::before { content:"! "; color:var(--yellow); font-weight:700; }
+.history-table { width:100%; border-collapse:collapse; font-size:13px; }
+.history-table th { text-align:left; padding:8px 12px; font-size:10px; color:var(--text-dim); text-transform:uppercase; letter-spacing:.4px; border-bottom:1px solid var(--border); white-space:nowrap; }
+.history-table td { padding:9px 12px; border-bottom:1px solid rgba(42,42,64,.6); transition:background .15s; }
+.history-table tr:hover td { background:rgba(123,140,222,.05); }
+.compare-checkbox { width:14px; height:14px; cursor:pointer; accent-color:var(--accent); }
+
+/* ── Toast notifications ── */
+#toastContainer { position:fixed; top:68px; right:20px; z-index:9999; display:flex; flex-direction:column; gap:8px; pointer-events:none; }
+.toast { display:flex; align-items:center; gap:10px; background:var(--surface3); border:1px solid var(--border2); border-radius:var(--radius-sm); padding:12px 16px; font-size:13px; font-weight:500; min-width:240px; max-width:320px; box-shadow:var(--shadow); animation:toastIn .3s ease; pointer-events:all; }
+.toast.hiding { animation:toastOut .3s ease forwards; }
+.toast-success { border-left:3px solid var(--green); }
+.toast-error   { border-left:3px solid var(--red); }
+.toast-info    { border-left:3px solid var(--accent); }
+.toast-icon { font-size:15px; flex-shrink:0; }
+
+/* ── Skeleton ── */
+.skeleton { background:var(--surface2); border-radius:4px; animation:skeletonPulse 1.4s ease infinite; }
+.skel-line { height:13px; margin-bottom:8px; }
+.skel-line.w-full { width:100%; }
+.skel-line.w-3q   { width:75%; }
+.skel-line.w-half { width:50%; }
+.skel-card { height:80px; border-radius:var(--radius-sm); margin-bottom:10px; }
+
+/* ── Misc ── */
+.report-actions { display:flex; gap:10px; flex-wrap:wrap; margin-bottom:16px; }
+.badge { display:inline-block; padding:2px 8px; border-radius:4px; font-size:10px; font-weight:700; }
+.badge-A{background:rgba(34,197,94,.18);color:var(--green);}
+.badge-B{background:rgba(123,140,222,.12);color:var(--accent);}
+.badge-C{background:rgba(245,158,11,.18);color:var(--yellow);}
+.badge-D{background:rgba(249,115,22,.18);color:var(--orange);}
+.badge-F{background:rgba(239,68,68,.18);color:var(--red);}
+.empty-state { text-align:center; padding:64px 20px; color:var(--text-dim); }
+.empty-state .empty-icon { font-size:44px; margin-bottom:14px; opacity:.5; }
+.section-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:14px; flex-wrap:wrap; gap:8px; }
+.section-header h3 { font-size:14px; font-weight:600; color:var(--text); }
+.error-box { background:rgba(239,68,68,.08); border:1px solid rgba(239,68,68,.35); border-radius:var(--radius-sm); padding:13px 18px; color:var(--red); margin-top:14px; display:none; font-size:13px; }
+.error-box.show { display:block; animation:fadeIn .2s ease; }
+.divider { border:none; border-top:1px solid var(--border); margin:6px 0 14px; }
+.trend-arrow{font-size:13px;font-weight:700;}
+.trend-up-bad{color:var(--red);} .trend-down-bad{color:var(--red);} .trend-stable{color:var(--text-dim);} .trend-good{color:var(--green);}
+.status-ok{color:var(--green);font-weight:600;} .status-warn{color:var(--yellow);font-weight:600;} .status-crit{color:var(--red);font-weight:600;}
+</style>
+</head>
+<body>
+
+<!-- Toast container -->
+<div id="toastContainer"></div>
+
+<header>
+  <div class="logo">
+    <div class="logo-icon">&#9992;</div>
+    UAV Flight Analyzer
+  </div>
+</header>
+
+<div class="tabs">
+  <button class="tab-btn active" data-tab="analyze" onclick="switchTab('analyze')">&#128196; Analyze</button>
+  <button class="tab-btn" data-tab="fleet" onclick="switchTab('fleet')">&#128202; Fleet Dashboard</button>
+</div>
+
+<!-- ══════════════════ TAB 1: ANALYZE ══════════════════ -->
+<div id="tab-analyze" class="tab-content active">
+<div class="container">
+
+  <!-- Recent analyses -->
+  <div id="recentWrap" class="recent-wrap" style="display:none">
+    <div class="card-title" style="margin-bottom:10px">Recent Analyses</div>
+    <div class="recent-strip" id="recentStrip"></div>
+  </div>
+
+  <!-- Upload -->
+  <div class="card">
+    <div class="card-title">Upload Flight Log</div>
+    <div class="upload-zone" id="uploadZone" onclick="document.getElementById('fileInput').click()"
+         ondragover="onDragOver(event)" ondragleave="onDragLeave(event)" ondrop="onDrop(event)">
+      <div class="icon">&#128193;</div>
+      <div id="uploadText">Drop your .BIN file here or click to browse</div>
+      <div class="hint">ArduPilot DataFlash log (.BIN)</div>
+      <input type="file" id="fileInput" accept=".bin,.BIN" style="display:none" onchange="onFileSelected(event)">
+    </div>
+  </div>
+
+  <!-- Drone config -->
+  <div class="card">
+    <div class="card-title">Drone Configuration</div>
+    <div class="form-row">
+      <div class="field">
+        <label>Drone ID</label>
+        <input type="text" id="droneId" placeholder="e.g. Insight-4" list="droneIdList" autocomplete="off">
+        <datalist id="droneIdList"></datalist>
+      </div>
+      <div class="field">
+        <label>Vehicle Type</label>
+        <div class="vehicle-selector">
+          <div class="vehicle-categories">
+            <div class="vcat-btn selected" id="vcat-rotorcraft" onclick="selectCategory('rotorcraft')">
+              <span class="vcat-icon">&#128641;</span><span class="vcat-label">Rotorcraft</span>
+            </div>
+            <div class="vcat-btn" id="vcat-vtol" onclick="selectCategory('vtol')">
+              <span class="vcat-icon">&#9992;</span><span class="vcat-label">VTOL Hybrid</span>
+            </div>
+            <div class="vcat-btn" id="vcat-fixedwing" onclick="selectCategory('fixedwing')">
+              <span class="vcat-icon">&#128640;</span><span class="vcat-label">Fixed-Wing</span>
+            </div>
+          </div>
+          <div class="vehicle-subtypes visible" id="vehicleSubtypes">
+            <div class="vsub-btn selected" id="vsub-quadcopter" onclick="selectSubtype('quadcopter',4,[1,2,3,4])">
+              <span class="vsub-name">Quadcopter</span><span class="vsub-detail">4 motors</span>
+            </div>
+            <div class="vsub-btn" id="vsub-hexacopter" onclick="selectSubtype('hexacopter',6,[1,2,3,4,5,6])">
+              <span class="vsub-name">Hexacopter</span><span class="vsub-detail">6 motors</span>
+            </div>
+            <div class="vsub-btn" id="vsub-octocopter" onclick="selectSubtype('octocopter',8,[1,2,3,4,5,6,7,8])">
+              <span class="vsub-name">Octocopter</span><span class="vsub-detail">8 motors</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <hr class="divider">
+    <div class="collapse-toggle" onclick="toggleProfile()">
+      <span class="collapse-arrow" id="collapseArrow">&#9654;</span>
+      <span>Profile Settings <span style="color:var(--text-dim);font-weight:400">(optional — modify thresholds)</span></span>
+    </div>
+    <div class="profile-fields" id="profileFields">
+      <!-- Preset bar -->
+      <div class="preset-bar">
+        <label>Presets:</label>
+        <select id="presetSelect" onchange="loadPreset(this.value)" style="background:var(--surface2);border:1px solid var(--border2);color:var(--text);border-radius:5px;padding:5px 10px;font-size:12px;outline:none">
+          <option value="">-- Load preset --</option>
+        </select>
+        <button class="btn btn-secondary btn-xs" onclick="promptSavePreset()">&#128190; Save</button>
+        <button class="btn btn-danger btn-xs" onclick="deletePreset()">&#128465; Delete</button>
+      </div>
+      <div class="profile-grid" id="profileGrid">
+        <div style="color:var(--text-dim);grid-column:1/-1;font-size:13px;padding:10px 0">Loading profile...</div>
+      </div>
+    </div>
+  </div>
+
+  <button class="btn btn-primary run-btn" id="analyzeBtn" onclick="runAnalysis()">
+    &#128269; Run Analysis
+  </button>
+
+  <div class="analyzing-bar" id="analyzingBar">
+    <div class="progress-header">
+      <div class="spinner"></div>
+      <div>
+        <div style="font-weight:600;color:var(--text)">Analyzing flight log...</div>
+        <div class="progress-module" id="progressModule">Initializing...</div>
+      </div>
+    </div>
+    <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
+  </div>
+
+  <div class="error-box" id="errorBox"></div>
+
+  <!-- Results -->
+  <div id="results" style="display:none;margin-top:22px">
+
+    <!-- Score banner with ring -->
+    <div class="score-banner" id="scoreBanner">
+      <div class="score-ring-wrap" id="scoreRingWrap">
+        <svg width="80" height="80" viewBox="0 0 80 80">
+          <circle class="score-ring-bg"   cx="40" cy="40" r="36"/>
+          <circle class="score-ring-fill" id="scoreRingFill" cx="40" cy="40" r="36"/>
+        </svg>
+        <div class="score-ring-label" id="gradeCircle"></div>
+      </div>
+      <div class="score-details">
+        <div class="score-num" id="scoreNum"></div>
+        <div class="verdict" id="verdictText"></div>
+        <div class="action"  id="actionText"></div>
+      </div>
+      <div class="issue-pills" id="issuePills"></div>
+    </div>
+
+    <!-- Report actions -->
+    <div class="report-actions">
+      <a id="viewReportBtn" href="#" target="_blank" class="btn btn-primary btn-sm">&#128196; View HTML Report</a>
+      <button class="btn btn-secondary btn-sm" onclick="downloadJSON()">&#8681; Download JSON</button>
+    </div>
+
+    <!-- Radar + module scores side by side -->
+    <div class="radar-wrap">
+      <div class="radar-card">
+        <div class="card-title" style="margin-bottom:12px">Module Radar</div>
+        <canvas id="radarCanvas"></canvas>
+      </div>
+      <div style="flex:1;min-width:280px">
+        <div class="card" style="margin-bottom:0">
+          <div class="card-title">Module Scores</div>
+          <div class="modules-grid" id="modulesGrid"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Issues -->
+    <div class="card" id="issuesCard">
+      <div class="section-header">
+        <h3>Issues Found</h3>
+        <div id="issueTabs" style="display:flex;gap:6px;flex-wrap:wrap"></div>
+      </div>
+      <div id="issuesList"></div>
+    </div>
+
+  </div><!-- /results -->
+
+</div>
+</div>
+
+<!-- ══════════════════ TAB 2: FLEET ══════════════════ -->
+<div id="tab-fleet" class="tab-content">
+<div class="container">
+
+  <!-- Summary stat cards -->
+  <div class="stat-cards" id="statCards">
+    <div class="stat-card skeleton" style="height:90px"></div>
+    <div class="stat-card skeleton" style="height:90px"></div>
+    <div class="stat-card skeleton" style="height:90px"></div>
+    <div class="stat-card skeleton" style="height:90px"></div>
+  </div>
+
+  <!-- Sub-navigation -->
+  <div class="fleet-sub-nav">
+    <button class="fleet-sub-btn active" data-view="overview" onclick="switchFleetView('overview')">&#128202; Overview</button>
+    <button class="fleet-sub-btn" data-view="calendar" onclick="switchFleetView('calendar')">&#128197; Maintenance</button>
+    <button class="fleet-sub-btn" data-view="compare" onclick="switchFleetView('compare')">&#9878; Compare</button>
+  </div>
+
+  <!-- Overview view -->
+  <div id="fview-overview" class="fleet-view active">
+    <div class="fleet-toolbar">
+      <div class="search-wrap">
+        <span class="search-icon">&#128269;</span>
+        <input class="search-input" id="fleetSearch" type="text" placeholder="Search drones..." oninput="filterFleet(this.value)">
+      </div>
+      <button class="btn btn-secondary btn-sm" onclick="loadFleet()">&#8635; Refresh</button>
+    </div>
+    <div id="fleetContent">
+      <div class="empty-state"><div class="empty-icon">&#128202;</div><p>Loading fleet data...</p></div>
+    </div>
+  </div>
+
+  <!-- Maintenance calendar view -->
+  <div id="fview-calendar" class="fleet-view">
+    <div class="section-header">
+      <h3>Maintenance Status</h3>
+      <span style="font-size:12px;color:var(--text-dim)">Based on accumulated flight time</span>
+    </div>
+    <div id="maintContent">
+      <div class="empty-state"><div class="empty-icon">&#128197;</div><p>Loading maintenance data...</p></div>
+    </div>
+  </div>
+
+  <!-- Compare view -->
+  <div id="fview-compare" class="fleet-view">
+    <div class="section-header" style="margin-bottom:10px">
+      <h3>Flight Comparison</h3>
+      <span style="font-size:12px;color:var(--text-dim)">Select two flights from the fleet history to compare</span>
+    </div>
+    <div class="compare-controls" id="compareSlots">
+      <div class="compare-slot">
+        <div class="slot-label">Flight A</div>
+        <div class="slot-val" id="slotA" style="color:var(--text-dim)">Not selected</div>
+      </div>
+      <div style="font-size:20px;color:var(--text-dim)">vs</div>
+      <div class="compare-slot">
+        <div class="slot-label">Flight B</div>
+        <div class="slot-val" id="slotB" style="color:var(--text-dim)">Not selected</div>
+      </div>
+      <button class="btn btn-primary btn-sm" onclick="runComparison()" id="compareBtn" disabled>Compare</button>
+      <button class="btn btn-secondary btn-sm" onclick="clearComparison()">Clear</button>
+    </div>
+    <div id="compareSource">
+      <div class="empty-state"><div class="empty-icon">&#9878;</div><p>Open a drone in the Overview tab and select two flights to compare</p></div>
+    </div>
+    <div id="compareResult" style="display:none"></div>
+  </div>
+
+</div>
+</div>
+
+<script>
+// ── State ─────────────────────────────────────────────────────────────────
+let selectedFile    = null;
+let selectedVehicle = 'quadcopter';
+let selectedMotorPreset = null;
+let currentReport   = null;
+let expandedDrone   = null;
+let droneCharts     = {};
+let fleetData       = [];
+let fleetFiltered   = [];
+let sortConfig      = { key: null, dir: 1 };
+let comparisonFlights = [];   // [{droneId, flightData}, ...]
+let radarChart      = null;
+let progressTimer   = null;
+const MODULES = ['Flight Overview','Battery','Motors','Vibration','Sensors','Control','Efficiency',
+  'RC Link','Landing & Wind','FC Health','VTOL Transition','Mission',
+  'Airspeed','PID Tuning','Power Rail','Telemetry','ESC Telemetry','Altitude Control'];
+
+// ── Toast ─────────────────────────────────────────────────────────────────
+function showToast(msg, type = 'info') {
+  const icons = { success: '&#10003;', error: '&#10005;', info: '&#8505;' };
+  const t = document.createElement('div');
+  t.className = `toast toast-${type}`;
+  // esc() called on msg to prevent XSS when msg contains user-derived data (e.g. preset names)
+  t.innerHTML = `<span class="toast-icon">${icons[type]||icons.info}</span><span>${esc(msg)}</span>`;
+  document.getElementById('toastContainer').appendChild(t);
+  setTimeout(() => { t.classList.add('hiding'); setTimeout(() => t.remove(), 300); }, 3200);
+}
+
+// ── Tab switching ──────────────────────────────────────────────────────────
+function switchTab(name) {
+  document.querySelectorAll('.tab-btn').forEach(b =>
+    b.classList.toggle('active', b.dataset.tab === name));
+  document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+  document.getElementById('tab-' + name).classList.add('active');
+  if (name === 'fleet') loadFleet();
+}
+
+function switchFleetView(view) {
+  document.querySelectorAll('.fleet-sub-btn').forEach(b =>
+    b.classList.toggle('active', b.dataset.view === view));
+  document.querySelectorAll('.fleet-view').forEach(el => el.classList.remove('active'));
+  document.getElementById('fview-' + view).classList.add('active');
+  if (view === 'calendar') {
+    if (fleetData.length) renderMaintenanceCalendar();
+    else loadFleet().then(() => renderMaintenanceCalendar());
+  }
+  if (view === 'compare' && comparisonFlights.length < 2) {
+    document.getElementById('compareSource').style.display = 'block';
+    document.getElementById('compareResult').style.display = 'none';
+  }
+}
+
+// ── File upload ────────────────────────────────────────────────────────────
+function onDragOver(e) { e.preventDefault(); document.getElementById('uploadZone').classList.add('drag-over'); }
+function onDragLeave(e) { document.getElementById('uploadZone').classList.remove('drag-over'); }
+function onDrop(e) {
+  e.preventDefault();
+  document.getElementById('uploadZone').classList.remove('drag-over');
+  const f = e.dataTransfer.files[0]; if (f) setFile(f);
+}
+function onFileSelected(e) { const f = e.target.files[0]; if (f) setFile(f); }
+function setFile(f) {
+  selectedFile = f;
+  document.getElementById('uploadZone').classList.add('has-file');
+  document.getElementById('uploadText').innerHTML = `<div class="file-name">&#10003; ${f.name}</div>`;
+}
+
+// ── Vehicle type ───────────────────────────────────────────────────────────
+function selectCategory(cat) {
+  document.querySelectorAll('.vcat-btn').forEach(b => b.classList.remove('selected'));
+  document.getElementById('vcat-' + cat).classList.add('selected');
+  const sub = document.getElementById('vehicleSubtypes');
+  if (cat === 'rotorcraft') {
+    sub.classList.add('visible');
+    selectSubtype('quadcopter', 4, [1,2,3,4]);
+  } else if (cat === 'vtol') {
+    sub.classList.remove('visible');
+    selectedVehicle = 'quadplane'; selectedMotorPreset = null; loadProfileFields('quadplane');
+  } else {
+    sub.classList.remove('visible');
+    selectedVehicle = 'fixed_wing'; selectedMotorPreset = null; loadProfileFields('fixed_wing');
+  }
+}
+function selectSubtype(subtype, count, channels) {
+  document.querySelectorAll('.vsub-btn').forEach(b => b.classList.remove('selected'));
+  document.getElementById('vsub-' + subtype).classList.add('selected');
+  selectedVehicle = 'quadcopter';
+  selectedMotorPreset = count === 4 ? null : { count, channels };
+  loadProfileFields('quadcopter');
+}
+
+// ── Profile fields ─────────────────────────────────────────────────────────
+let profileData = {};
+async function loadProfileFields(type) {
+  try {
+    const res = await fetch(`/api/profiles/${type}`);
+    profileData = await res.json();
+    renderProfileFields(profileData);
+  } catch(e) {
+    document.getElementById('profileGrid').innerHTML =
+      '<div style="color:var(--red);grid-column:1/-1">Failed to load profile</div>';
+  }
+}
+function renderProfileFields(p) {
+  const motorCountReadonly = selectedMotorPreset ? ' readonly' : '';
+  const motorCountVal = selectedMotorPreset ? selectedMotorPreset.count : (p.motors?.count ?? 4);
+  const bat = p.battery || {}, mot = p.motors || {}, vib = p.vibration || {};
+  const gps = p.gps || {}, maint = p.maintenance || {};
+  document.getElementById('profileGrid').innerHTML = `
+    <div class="profile-section-title">Operational</div>
+    ${pf('expected_endurance_min','Expected Endurance (min)',p.expected_endurance_min??'')}
+    ${pf('expected_range_km','Expected Range (km)',p.expected_range_km??'')}
+    ${pf('max_payload_kg','Max Payload (kg)',p.max_payload_kg??'')}
+    ${pf('max_speed_ms','Max Speed (m/s)',p.max_speed_ms??'')}
+    ${pf('max_altitude_m','Max Altitude (m)',p.max_altitude_m??'')}
+    <div class="profile-section-title">Battery</div>
+    ${pf('bat_cell_count','Cell Count',bat.cell_count??'',1)}
+    ${pf('bat_capacity_mah','Capacity (mAh)',bat.capacity_mah??'')}
+    ${pf('bat_full_voltage','Full Voltage (V)',bat.full_voltage??'')}
+    ${pf('bat_nominal_voltage','Nominal Voltage (V)',bat.nominal_voltage??'')}
+    ${pf('bat_min_cell_v','Min Cell Voltage (V)',bat.min_cell_voltage??'')}
+    ${pf('bat_crit_cell_v','Critical Cell V (V)',bat.critical_cell_voltage??'')}
+    ${pf('bat_max_current','Max Current (A)',bat.max_continuous_current_a??'')}
+    ${pf('bat_cycles','Cycle Lifespan',bat.cycles_lifespan??'',1)}
+    <div class="profile-section-title">Motors</div>
+    <div class="field"><label>Motor Count</label><input type="number" id="pf_mot_count" value="${motorCountVal}" step="1"${motorCountReadonly}></div>
+    ${pf('mot_hover_throttle','Hover Throttle (%)',mot.hover_throttle_pct??'')}
+    ${pf('mot_warn_throttle','Warn Throttle (%)',mot.high_throttle_warn_pct??'')}
+    ${pf('mot_crit_throttle','Critical Throttle (%)',mot.high_throttle_critical_pct??'')}
+    ${pf('mot_max_pwm','Max PWM',mot.max_pwm??'',1)}
+    ${pf('mot_min_pwm','Min PWM',mot.min_pwm??'',1)}
+    <div class="profile-section-title">Vibration</div>
+    ${pf('vib_warn','Warn Level (m/s2)',vib.warn_threshold??'')}
+    ${pf('vib_crit','Critical Level (m/s2)',vib.critical_threshold??'')}
+    ${pf('vib_clip','Clip Warn / min',vib.clip_warn_per_min??'',1)}
+    <div class="profile-section-title">GPS</div>
+    ${pf('gps_min_sat','Min Satellites',gps.min_satellites??'',1)}
+    ${pf('gps_max_hdop','Max HDOP',gps.max_hdop??'')}
+    ${pf('gps_min_fix','Min Fix Type',gps.min_fix_type??'',1)}
+    ${pf('gps_max_jump','Max Position Jump (m)',gps.max_position_jump_m??'')}
+    <div class="profile-section-title">Maintenance Schedule</div>
+    ${pf('maint_motor_h','Motor Hours',maint.motor_hours??'')}
+    ${pf('maint_prop_cy','Prop Cycles',maint.prop_cycles??'',1)}
+    ${pf('maint_bat_cy','Battery Cycles',maint.battery_cycles??'',1)}
+    ${pf('maint_esc_h','ESC Hours',maint.esc_hours??'')}
+    ${pf('maint_frame_h','Frame Inspection Hours',maint.frame_inspection_hours??'')}
+  `;
+}
+function pf(id, label, val, step) {
+  const s = step ? ` step="${step}"` : ' step="any"';
+  return `<div class="field"><label>${label}</label><input type="number" id="pf_${id}" value="${val}"${s}></div>`;
+}
+function getProfileOverrides() {
+  const g  = id => { const e = document.getElementById('pf_'+id); return e ? parseFloat(e.value) : null; };
+  const gi = id => { const e = document.getElementById('pf_'+id); return e ? parseInt(e.value) : null; };
+  const ov = {
+    expected_endurance_min:g('expected_endurance_min'), expected_range_km:g('expected_range_km'),
+    max_payload_kg:g('max_payload_kg'), max_speed_ms:g('max_speed_ms'), max_altitude_m:g('max_altitude_m'),
+    battery:{ cell_count:gi('bat_cell_count'), capacity_mah:g('bat_capacity_mah'),
+      full_voltage:g('bat_full_voltage'), nominal_voltage:g('bat_nominal_voltage'),
+      min_cell_voltage:g('bat_min_cell_v'), critical_cell_voltage:g('bat_crit_cell_v'),
+      max_continuous_current_a:g('bat_max_current'), cycles_lifespan:gi('bat_cycles') },
+    motors:{ count:gi('mot_count'), hover_throttle_pct:g('mot_hover_throttle'),
+      high_throttle_warn_pct:g('mot_warn_throttle'), high_throttle_critical_pct:g('mot_crit_throttle'),
+      max_pwm:gi('mot_max_pwm'), min_pwm:gi('mot_min_pwm') },
+    vibration:{ warn_threshold:g('vib_warn'), critical_threshold:g('vib_crit'), clip_warn_per_min:gi('vib_clip') },
+    gps:{ min_satellites:gi('gps_min_sat'), max_hdop:g('gps_max_hdop'), min_fix_type:gi('gps_min_fix'), max_position_jump_m:g('gps_max_jump') },
+    maintenance:{ motor_hours:g('maint_motor_h'), prop_cycles:gi('maint_prop_cy'),
+      battery_cycles:gi('maint_bat_cy'), esc_hours:g('maint_esc_h'), frame_inspection_hours:g('maint_frame_h') },
+  };
+  if (selectedMotorPreset) { ov.motors.count = selectedMotorPreset.count; ov.motors.channels = selectedMotorPreset.channels; }
+  return ov;
+}
+function toggleProfile() {
+  const open = document.getElementById('profileFields').classList.toggle('open');
+  document.getElementById('collapseArrow').classList.toggle('open', open);
+}
+
+// ── Profile presets (localStorage) ────────────────────────────────────────
+function renderPresetSelector() {
+  const presets = JSON.parse(localStorage.getItem('uav_presets') || '{}');
+  const sel = document.getElementById('presetSelect');
+  const cur = sel.value;
+  sel.innerHTML = '<option value="">-- Load preset --</option>' +
+    Object.keys(presets).map(n => `<option value="${esc(n)}"${n===cur?' selected':''}>${esc(n)}</option>`).join('');
+}
+function promptSavePreset() {
+  const name = prompt('Preset name:');
+  if (!name) return;
+  const presets = JSON.parse(localStorage.getItem('uav_presets') || '{}');
+  presets[name] = getProfileOverrides();
+  localStorage.setItem('uav_presets', JSON.stringify(presets));
+  renderPresetSelector();
+  showToast(`Preset "${name}" saved`, 'success');
+}
+function loadPreset(name) {
+  if (!name) return;
+  const presets = JSON.parse(localStorage.getItem('uav_presets') || '{}');
+  const preset = presets[name]; if (!preset) return;
+  // open section and apply values
+  document.getElementById('profileFields').classList.add('open');
+  document.getElementById('collapseArrow').classList.add('open');
+  function set(id, val) { const e = document.getElementById('pf_'+id); if (e && val != null) e.value = val; }
+  set('expected_endurance_min', preset.expected_endurance_min);
+  set('expected_range_km', preset.expected_range_km);
+  set('max_payload_kg', preset.max_payload_kg);
+  set('max_speed_ms', preset.max_speed_ms);
+  set('max_altitude_m', preset.max_altitude_m);
+  const b = preset.battery || {};
+  set('bat_cell_count',b.cell_count); set('bat_capacity_mah',b.capacity_mah);
+  set('bat_full_voltage',b.full_voltage); set('bat_nominal_voltage',b.nominal_voltage);
+  set('bat_min_cell_v',b.min_cell_voltage); set('bat_crit_cell_v',b.critical_cell_voltage);
+  set('bat_max_current',b.max_continuous_current_a); set('bat_cycles',b.cycles_lifespan);
+  const m = preset.motors || {};
+  set('mot_count',m.count); set('mot_hover_throttle',m.hover_throttle_pct);
+  set('mot_warn_throttle',m.high_throttle_warn_pct); set('mot_crit_throttle',m.high_throttle_critical_pct);
+  set('mot_max_pwm',m.max_pwm); set('mot_min_pwm',m.min_pwm);
+  const v = preset.vibration || {};
+  set('vib_warn',v.warn_threshold); set('vib_crit',v.critical_threshold); set('vib_clip',v.clip_warn_per_min);
+  const g = preset.gps || {};
+  set('gps_min_sat',g.min_satellites); set('gps_max_hdop',g.max_hdop);
+  set('gps_min_fix',g.min_fix_type); set('gps_max_jump',g.max_position_jump_m);
+  const mn = preset.maintenance || {};
+  set('maint_motor_h',mn.motor_hours); set('maint_prop_cy',mn.prop_cycles);
+  set('maint_bat_cy',mn.battery_cycles); set('maint_esc_h',mn.esc_hours); set('maint_frame_h',mn.frame_inspection_hours);
+  showToast(`Preset "${name}" loaded`, 'info');
+}
+function deletePreset() {
+  const name = document.getElementById('presetSelect').value;
+  if (!name) return;
+  if (!confirm(`Delete preset "${name}"?`)) return;
+  const presets = JSON.parse(localStorage.getItem('uav_presets') || '{}');
+  delete presets[name];
+  localStorage.setItem('uav_presets', JSON.stringify(presets));
+  renderPresetSelector();
+  showToast(`Preset "${name}" deleted`);
+}
+
+// ── Recent analyses (localStorage) ────────────────────────────────────────
+// Session-only store for recent reports — indexed by position (0=most recent).
+// Safe for onclick use since indices are integers, not user-derived strings.
+window._recentReports = [];   // array: [newest, ..., oldest], max 6
+
+function saveRecentAnalysis(report) {
+  window._recentReports.unshift(report);
+  if (window._recentReports.length > 6) window._recentReports.length = 6;
+  const recents = JSON.parse(localStorage.getItem('uav_recents') || '[]');
+  recents.unshift({
+    droneId: report.meta?.drone_name || '',
+    logFile: report.meta?.log_file || '',
+    score:   report.flight_summary?.overall_score || 0,
+    grade:   report.flight_summary?.grade || '?',
+    ts:      Date.now(),
+  });
+  localStorage.setItem('uav_recents', JSON.stringify(recents.slice(0, 6)));
+  renderRecentAnalyses();
+}
+function renderRecentAnalyses() {
+  const recents = JSON.parse(localStorage.getItem('uav_recents') || '[]');
+  const wrap = document.getElementById('recentWrap');
+  const strip = document.getElementById('recentStrip');
+  if (!recents.length) { wrap.style.display = 'none'; return; }
+  wrap.style.display = 'block';
+  // window._recentReports[i] is parallel to recents[i] for this session only.
+  // After a page refresh _recentReports is empty so items are display-only (not clickable).
+  strip.innerHTML = recents.map((r, i) => {
+    const hasReport = i < window._recentReports.length && !!window._recentReports[i];
+    const clickAttr = hasReport
+      ? `onclick="restoreRecent(${i})" title="Click to view results again"`
+      : `title="${esc(r.logFile)}"`;
+    return `
+    <div class="recent-item" ${clickAttr} style="${hasReport?'cursor:pointer':'cursor:default'}">
+      <span class="badge badge-${r.grade}">${r.grade}</span>
+      <div class="recent-info">
+        <div class="recent-drone">${esc(r.droneId)}</div>
+        <div class="recent-file">${esc(r.logFile)}</div>
+      </div>
+      <div class="recent-score">${(+r.score).toFixed(1)}</div>
+    </div>`;
+  }).join('');
+}
+function restoreRecent(idx) {
+  const report = window._recentReports[idx];
+  if (!report) { showToast('Report not available — run analysis again', 'error'); return; }
+  currentReport = report;
+  renderResults(report);
+  showToast('Results restored', 'info');
+}
+
+// ── Fake progress simulation ───────────────────────────────────────────────
+function startProgress() {
+  let i = 0;
+  const fill = document.getElementById('progressFill');
+  const mod  = document.getElementById('progressModule');
+  progressTimer = setInterval(() => {
+    if (i < MODULES.length) {
+      if (mod) mod.textContent = `Running: ${MODULES[i]}  (${i+1}/${MODULES.length})`;
+      if (fill) fill.style.width = `${Math.round((i+1)/MODULES.length*100)}%`;
+      i++;
+    }
+  }, 2600);
+}
+function stopProgress() {
+  clearInterval(progressTimer);
+  const fill = document.getElementById('progressFill');
+  if (fill) fill.style.width = '100%';
+}
+
+// ── Analysis ──────────────────────────────────────────────────────────────
+async function runAnalysis() {
+  const droneId = document.getElementById('droneId').value.trim();
+  if (!selectedFile) { showError('Please select a .BIN log file.'); return; }
+  if (!droneId)       { showError('Please enter a Drone ID.'); return; }
+  showError('');
+  document.getElementById('results').style.display = 'none';
+  document.getElementById('analyzeBtn').disabled = true;
+  document.getElementById('analyzingBar').classList.add('show');
+  startProgress();
+  const form = new FormData();
+  form.append('log_file', selectedFile);
+  form.append('drone_id', droneId);
+  form.append('vehicle_type', selectedVehicle);
+  form.append('profile_overrides', JSON.stringify(getProfileOverrides()));
+  try {
+    const res  = await fetch('/api/analyze', { method:'POST', body:form });
+    const body = await res.text();
+    if (!res.ok) {
+      let detail; try { detail = JSON.parse(body).detail; } catch { detail = body; }
+      throw new Error(detail || `Server error ${res.status}`);
+    }
+    currentReport = JSON.parse(body);
+    saveRecentAnalysis(currentReport);
+    renderResults(currentReport);
+    refreshDroneIdList();
+    showToast('Analysis complete!', 'success');
+  } catch(e) {
+    showError('Analysis error: ' + e.message);
+    showToast('Analysis failed', 'error');
+  } finally {
+    stopProgress();
+    document.getElementById('analyzeBtn').disabled = false;
+    document.getElementById('analyzingBar').classList.remove('show');
+  }
+}
+function showError(msg) {
+  const el = document.getElementById('errorBox');
+  el.textContent = msg; el.classList.toggle('show', !!msg);
+}
+
+// ── Render results ─────────────────────────────────────────────────────────
+function renderResults(report) {
+  const fs = report.flight_summary, grade = fs.grade, issues = report.all_issues || [];
+  // Score ring
+  const banner = document.getElementById('scoreBanner');
+  banner.className = 'score-banner grade-' + grade;
+  document.getElementById('gradeCircle').textContent = grade;
+  // Animated counter
+  const numEl = document.getElementById('scoreNum');
+  animateScore(0, fs.overall_score, numEl);
+  // Ring
+  requestAnimationFrame(() => {
+    const circumference = 2 * Math.PI * 36;
+    const fill = document.getElementById('scoreRingFill');
+    fill.style.strokeDashoffset = circumference * (1 - fs.overall_score / 100);
+  });
+  document.getElementById('verdictText').textContent = fs.verdict;
+  document.getElementById('actionText').textContent  = fs.action;
+  const isum = fs.issue_summary;
+  document.getElementById('issuePills').innerHTML =
+    `${isum.critical?`<span class="pill pill-red">${isum.critical} Critical</span>`:''}
+     ${isum.warning ?`<span class="pill pill-yellow">${isum.warning} Warning</span>`:''}
+     ${isum.info    ?`<span class="pill pill-blue">${isum.info} Info</span>`:''}`;
+  if (report.html_report_url) document.getElementById('viewReportBtn').href = report.html_report_url;
+  // Radar chart
+  const mr = report.module_results || {};
+  renderRadarChart(mr);
+  // Module grid
+  document.getElementById('modulesGrid').innerHTML = Object.entries(mr).map(([name, m]) => {
+    if (!m.available) return `<div class="module-card"><div class="mod-name">${fmt(name)}</div><div class="mod-score mod-NA">N/A</div><div class="mod-grade mod-NA">Not available</div></div>`;
+    const g = m.grade||'?';
+    return `<div class="module-card"><div class="mod-name">${fmt(name)}</div><div class="mod-score mod-${g}">${(m.score||0).toFixed(0)}</div><div class="mod-grade mod-${g}">${g}</div></div>`;
+  }).join('');
+  renderIssues(issues);
+  document.getElementById('results').style.display = 'block';
+  document.getElementById('results').scrollIntoView({ behavior:'smooth' });
+}
+
+// ── Score animation ────────────────────────────────────────────────────────
+function animateScore(from, to, el, dur = 1300) {
+  const start = performance.now();
+  function step(now) {
+    const t = Math.min((now - start) / dur, 1);
+    const ease = 1 - Math.pow(1 - t, 3);
+    el.textContent = (from + (to - from) * ease).toFixed(1) + ' / 100';
+    if (t < 1) requestAnimationFrame(step);
+  }
+  requestAnimationFrame(step);
+}
+
+// ── Radar chart ────────────────────────────────────────────────────────────
+function renderRadarChart(mr) {
+  const ctx = document.getElementById('radarCanvas');
+  if (!ctx) return;
+  if (radarChart) { radarChart.destroy(); radarChart = null; }
+  const avail = Object.entries(mr).filter(([, v]) => v.available);
+  if (!avail.length) return;
+  const labels = avail.map(([k]) => fmt(k));
+  const data   = avail.map(([, v]) => v.score || 0);
+  const colors = data.map(s => s >= 90 ? '#22c55e' : s >= 75 ? '#7b8cde' : s >= 60 ? '#f59e0b' : s >= 40 ? '#f97316' : '#ef4444');
+  radarChart = new Chart(ctx, {
+    type: 'radar',
+    data: {
+      labels,
+      datasets: [{
+        data, borderColor: '#7b8cde', backgroundColor: 'rgba(123,140,222,0.08)',
+        pointBackgroundColor: colors, pointRadius: 4, borderWidth: 1.5,
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      scales: { r: {
+        min: 0, max: 100,
+        ticks: { color: '#5a5f7a', stepSize: 25, backdropColor: 'transparent', font: { size: 9 } },
+        grid: { color: '#2a2a40' },
+        pointLabels: { color: '#9095b0', font: { size: 9 } },
+        angleLines: { color: '#2a2a40' },
+      }},
+      plugins: { legend: { display: false } },
+    }
+  });
+}
+
+// ── Issues ─────────────────────────────────────────────────────────────────
+function renderIssues(issues) {
+  const crits = issues.filter(i => i.severity==='critical');
+  const warns  = issues.filter(i => i.severity==='warning');
+  const infos  = issues.filter(i => i.severity==='info');
+  document.getElementById('issueTabs').innerHTML =
+    `${crits.length?`<button class="btn btn-sm" style="background:rgba(239,68,68,.18);color:var(--red);border:1px solid rgba(239,68,68,.3)" onclick="filterIssues('critical')">${crits.length} Critical</button>`:''}
+     ${warns.length ?`<button class="btn btn-sm" style="background:rgba(245,158,11,.18);color:var(--yellow);border:1px solid rgba(245,158,11,.3)" onclick="filterIssues('warning')">${warns.length} Warning</button>`:''}
+     ${infos.length ?`<button class="btn btn-sm" style="background:rgba(123,140,222,.12);color:var(--accent);border:1px solid rgba(123,140,222,.3)" onclick="filterIssues('info')">${infos.length} Info</button>`:''}
+     <button class="btn btn-sm btn-secondary" onclick="filterIssues('all')">All</button>`;
+  window._allIssues = issues;
+  filterIssues('all');
+}
+function filterIssues(sev) {
+  const issues = sev==='all' ? window._allIssues : window._allIssues.filter(i => i.severity===sev);
+  const list = document.getElementById('issuesList');
+  if (!issues.length) { list.innerHTML='<div style="color:var(--text-dim);padding:10px">No issues in this category.</div>'; return; }
+  list.innerHTML = issues.map((i, idx) => {
+    const hasDetail = i.value != null || i.threshold != null || i.timestamp_s != null;
+    const meta = [];
+    if (i.value     != null) meta.push(`<span>Value: ${i.value}</span>`);
+    if (i.threshold != null) meta.push(`<span>Threshold: ${i.threshold}</span>`);
+    if (i.timestamp_s != null) meta.push(`<span>At: ${fmtDur(i.timestamp_s)}</span>`);
+    return `<div class="issue-item ${i.severity}" onclick="toggleIssueDetail(${idx})">
+      <div class="issue-code">
+        [${i.severity.toUpperCase()}] ${i.code||''} &nbsp;&#183;&nbsp; ${i.module||''}
+        ${hasDetail ? '<span style="font-size:10px;opacity:.6">&#9654; details</span>' : ''}
+      </div>
+      <div class="issue-msg">${i.message}</div>
+      ${hasDetail ? `<div class="issue-detail" id="idet-${idx}"><div class="issue-meta">${meta.join('')}</div></div>` : ''}
+    </div>`;
+  }).join('');
+  window._currentIssues = issues;
+}
+function toggleIssueDetail(idx) {
+  const el = document.getElementById('idet-' + idx);
+  if (el) el.classList.toggle('open');
+}
+
+function downloadJSON() {
+  if (!currentReport) return;
+  const blob = new Blob([JSON.stringify(currentReport,null,2)],{type:'application/json'});
+  const url  = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `${(currentReport.meta?.drone_name||'report').replace(/[^a-z0-9-_]/gi,'_')}_report.json`;
+  a.click(); URL.revokeObjectURL(url);
+}
+
+// ── Safe DOM key for drone names (no special chars in IDs) ─────────────────
+window._droneRegistry = {};   // safeKey → drone_name
+window._flightRegistry = {};  // flight.id → flight object
+function droneKey(name) {
+  // Stable key: base64-ish index into registry
+  for (const [k, v] of Object.entries(window._droneRegistry)) { if (v === name) return k; }
+  const k = 'dk' + Object.keys(window._droneRegistry).length;
+  window._droneRegistry[k] = name; return k;
+}
+
+// ── Fleet dashboard ────────────────────────────────────────────────────────
+async function loadFleet() {
+  document.getElementById('fleetContent').innerHTML =
+    `<div class="empty-state"><div class="empty-icon">&#8987;</div><p>Loading...</p></div>`;
+  renderStatCardsSkeleton();
+  window._droneRegistry = {};   // reset on each fleet reload
+  expandedDrone = null;
+  Object.values(droneCharts).forEach(c=>c.destroy()); droneCharts = {};
+  try {
+    const res = await fetch('/api/fleet');
+    fleetData = await res.json();
+    fleetFiltered = [...fleetData];
+    renderStatCards(fleetData);
+    renderFleetTable(fleetFiltered);
+  } catch(e) {
+    document.getElementById('fleetContent').innerHTML =
+      `<div class="error-box show">Failed to load fleet: ${esc(e.message)}</div>`;
+  }
+}
+function renderStatCardsSkeleton() {
+  document.getElementById('statCards').innerHTML =
+    Array(4).fill('<div class="stat-card skeleton" style="height:90px"></div>').join('');
+}
+function renderStatCards(data) {
+  if (!data.length) { document.getElementById('statCards').innerHTML=''; return; }
+  const scores = data.map(d => d.overall_score||0);
+  const avg = (scores.reduce((a,b)=>a+b,0)/scores.length).toFixed(1);
+  const crits = data.filter(d => (d.grade==='D'||d.grade==='F')).length;
+  const alerts = data.filter(d => d.alerts?.length).length;
+  const total = data.length;
+  document.getElementById('statCards').innerHTML = `
+    <div class="stat-card stat-accent">
+      <div class="stat-label">Total Drones</div>
+      <div class="stat-value">${total}</div>
+      <div class="stat-sub">in fleet</div>
+    </div>
+    <div class="stat-card ${avg>=80?'stat-good':avg>=60?'':'stat-warn'}">
+      <div class="stat-label">Avg Fleet Score</div>
+      <div class="stat-value">${avg}</div>
+      <div class="stat-sub">overall health</div>
+    </div>
+    <div class="stat-card ${alerts?'stat-warn':'stat-good'}">
+      <div class="stat-label">Maintenance Alerts</div>
+      <div class="stat-value">${alerts}</div>
+      <div class="stat-sub">drones with alerts</div>
+    </div>
+    <div class="stat-card ${crits?'stat-crit':'stat-good'}">
+      <div class="stat-label">Needs Attention</div>
+      <div class="stat-value">${crits}</div>
+      <div class="stat-sub">grade D or F</div>
+    </div>`;
+}
+function filterFleet(q) {
+  fleetFiltered = q
+    ? fleetData.filter(d => (d.drone_name||'').toLowerCase().includes(q.toLowerCase()) ||
+        (d.drone_type||'').toLowerCase().includes(q.toLowerCase()))
+    : [...fleetData];
+  _applySortToFiltered();   // preserve active sort after filter
+  renderFleetTable(fleetFiltered);
+}
+function _applySortToFiltered() {
+  if (!sortConfig.key) return;
+  const key = sortConfig.key, dir = sortConfig.dir;
+  fleetFiltered.sort((a,b) => {
+    const av = a[key]??'', bv = b[key]??'';
+    return typeof av==='number' ? (av-bv)*dir : String(av).localeCompare(String(bv))*dir;
+  });
+}
+function sortFleet(key) {
+  if (sortConfig.key === key) sortConfig.dir *= -1;
+  else { sortConfig.key = key; sortConfig.dir = 1; }
+  _applySortToFiltered();
+  renderFleetTable(fleetFiltered);
+}
+function renderFleetTable(data) {
+  // Reset expanded state — re-render invalidates all old row/detail-row DOM references
+  expandedDrone = null;
+  Object.values(droneCharts).forEach(c=>c.destroy()); droneCharts = {};
+  if (!data.length) {
+    document.getElementById('fleetContent').innerHTML =
+      `<div class="empty-state"><div class="empty-icon">&#128203;</div><p>No drones match your search.</p></div>`;
+    return;
+  }
+  const th = (key, label) => {
+    const sorted = sortConfig.key===key;
+    const arrow  = sorted ? (sortConfig.dir===1?'&#8679;':'&#8681;') : '&#8597;';
+    return `<th class="${sorted?'sorted':''}" onclick="sortFleet('${key}')">${label} <span class="sort-arrow">${arrow}</span></th>`;
+  };
+  const rows = data.map(d => {
+    const grade = d.grade||'?', score = (d.overall_score||0).toFixed(1);
+    const arrow = trendArrow(d.trend_arrow);
+    const dk = droneKey(d.drone_name);
+    const status = d.alerts?.length
+      ? `<span class="status-warn">! ${esc(d.alerts[0].substring(0,36))}${d.alerts[0].length>36?'...':''}</span>`
+      : `<span class="status-ok">&#10003; Healthy</span>`;
+    return `
+      <tr class="clickable" onclick="toggleDroneDetail('${dk}',this)" data-dk="${dk}">
+        <td><strong>${esc(d.drone_name)}</strong></td>
+        <td>${esc((d.drone_type||'').replace('_',' '))}</td>
+        <td><span class="badge badge-${grade}">${grade}</span> <span style="color:var(--text-mid)">${score}</span></td>
+        <td>${arrow}</td>
+        <td>${d.total_flights}</td>
+        <td>${(d.flight_date||'').substring(0,10)}</td>
+        <td>${status}</td>
+      </tr>
+      <tr id="detail-row-${dk}" style="display:none">
+        <td colspan="7" style="padding:0 0 12px 0">
+          <div id="detail-${dk}" class="drone-detail">Loading...</div>
+        </td>
+      </tr>`;
+  }).join('');
+  document.getElementById('fleetContent').innerHTML = `
+    <div class="card" style="padding:0;overflow:hidden">
+      <table class="fleet-table">
+        <thead><tr>
+          ${th('drone_name','Drone ID')}${th('drone_type','Type')}${th('overall_score','Score')}
+          <th>Trend</th>${th('total_flights','Flights')}${th('flight_date','Last Flight')}<th>Status</th>
+        </tr></thead>
+        <tbody>${rows}</tbody>
+      </table>
+    </div>`;
+}
+
+// ── Drone detail ───────────────────────────────────────────────────────────
+async function toggleDroneDetail(dk, row) {
+  const droneId   = window._droneRegistry[dk];
+  const detailRow = document.getElementById(`detail-row-${dk}`);
+  const detailEl  = document.getElementById(`detail-${dk}`);
+  if (!detailRow || !detailEl) return;
+  if (detailRow.style.display !== 'none') {
+    detailRow.style.display = 'none'; row.classList.remove('expanded');
+    expandedDrone = null;
+    Object.values(droneCharts).forEach(c=>c.destroy()); droneCharts = {};
+    return;
+  }
+  if (expandedDrone) {
+    const prev = document.getElementById(`detail-row-${expandedDrone}`);
+    if (prev) prev.style.display = 'none';
+    const pr = document.querySelector(`[data-dk="${expandedDrone}"]`);
+    if (pr) pr.classList.remove('expanded');
+    Object.values(droneCharts).forEach(c=>c.destroy()); droneCharts = {};
+  }
+  expandedDrone = dk;
+  detailRow.style.display = 'table-row'; row.classList.add('expanded');
+  detailEl.innerHTML = `<div class="skeleton skel-line w-half"></div><div class="skeleton skel-card"></div>`;
+  try {
+    const res = await fetch(`/api/fleet/${encodeURIComponent(droneId)}/history`);
+    if (!res.ok) throw new Error('Not found');
+    const data = await res.json();
+    renderDroneDetail(droneId, dk, data, detailEl);
+  } catch(e) {
+    detailEl.innerHTML = `<div style="color:var(--red)">Failed to load history: ${e.message}</div>`;
+  }
+}
+function renderDroneDetail(droneId, dk, data, el) {
+  const history = data.history||[], trends = data.trends||{}, alerts = data.alerts||[];
+  // Register flights for comparison lookup
+  history.forEach(f => { window._flightRegistry[f.id] = f; });
+  const alertHtml = alerts.length ? `
+    <div class="alert-banner">
+      <h4>Maintenance Alerts</h4>
+      ${alerts.map(a=>`<div class="alert-item">${esc(a)}</div>`).join('')}
+    </div>` : '';
+  const chartMetrics = [
+    { key:'overall_score',               label:'Overall Score',       color:'#7b8cde' },
+    { key:'bat_internal_resistance_mohm', label:'Battery IR (mohm)',   color:'#f59e0b' },
+    { key:'vibe_x',                      label:'Vibration X',         color:'#a78bfa' },
+    { key:'motor_imbalance_pct',         label:'Motor Imbalance %',   color:'#f97316' },
+  ];
+  const chartsHtml = chartMetrics.filter(m => trends[m.key]?.values?.length >= 2)
+    .map(m => `<div class="chart-card"><div class="chart-title">${esc(m.label)}${trends[m.key].alert?' !':''}</div><canvas id="chart-${dk}-${m.key}"></canvas></div>`)
+    .join('');
+  const safeName = droneId.replace(/[^a-z0-9-_]/gi,'_');
+  const tableRows = history.map((f, i) => {
+    const grade=f.grade||'?', score=(f.overall_score||0).toFixed(1);
+    const ir  = f.bat_internal_resistance_mohm!=null ? f.bat_internal_resistance_mohm.toFixed(1) : '--';
+    const cv  = f.bat_end_cell_v!=null ? f.bat_end_cell_v.toFixed(3) : '--';
+    const vx  = f.vibe_x!=null ? f.vibe_x.toFixed(1) : '--';
+    const dur = f.duration_s ? fmtDur(f.duration_s) : '--';
+    const issues = `${f.crit_count?`<span style="color:var(--red)">${f.crit_count}C</span> `:''}${f.warn_count?`<span style="color:var(--yellow)">${f.warn_count}W</span>`:''}${!f.crit_count&&!f.warn_count?'<span style="color:var(--green)">OK</span>':''}`;
+    const inCompare = comparisonFlights.some(c=>c.id===f.id);
+    // Pass flight id only — registry lookup in toggleCompare avoids inline JSON injection
+    return `<tr>
+      <td><input type="checkbox" class="compare-checkbox" ${inCompare?'checked':''} data-fid="${f.id}" onchange="toggleCompare(event,${f.id})"></td>
+      <td>${i+1}</td>
+      <td>${(f.flight_date||'').substring(0,10)}</td>
+      <td style="max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(f.log_file||'--')}</td>
+      <td>${dur}</td>
+      <td><span class="badge badge-${grade}">${grade}</span> ${score}</td>
+      <td>${ir}</td><td>${cv}</td><td>${vx}</td><td>${issues}</td>
+      <td><a href="/reports/${safeName}_${f.id}_report.html" target="_blank" class="btn btn-secondary btn-sm">&#128196;</a></td>
+    </tr>`;
+  }).join('');
+  el.innerHTML = `
+    ${alertHtml}
+    ${chartsHtml?`<div class="detail-charts">${chartsHtml}</div>`:''}
+    <div class="section-header">
+      <h3>Flight History (${history.length})</h3>
+      <div style="display:flex;gap:8px;align-items:center">
+        <span style="font-size:11px;color:var(--text-dim)">&#9989; Check rows to compare</span>
+        <a href="/api/fleet/${encodeURIComponent(droneId)}/export" class="btn btn-secondary btn-sm">&#8681; CSV</a>
+      </div>
+    </div>
+    <div style="overflow-x:auto">
+      <table class="history-table">
+        <thead><tr><th></th><th>#</th><th>Date</th><th>Log File</th><th>Duration</th><th>Score</th><th>Bat IR</th><th>Cell V</th><th>Vibe X</th><th>Issues</th><th>Report</th></tr></thead>
+        <tbody>${tableRows}</tbody>
+      </table>
+    </div>`;
+  requestAnimationFrame(() => {
+    chartMetrics.forEach(m => {
+      const t = trends[m.key];
+      if (!t || t.values.length<2) return;
+      const canvas = document.getElementById(`chart-${dk}-${m.key}`);
+      if (!canvas) return;
+      const labels = t.values.map((_,i)=>`F${t.values.length-i}`).reverse();
+      const vals   = [...t.values].reverse();
+      const lc = t.alert ? '#ef4444' : m.color;
+      droneCharts[m.key] = new Chart(canvas, {
+        type:'line',
+        data:{ labels, datasets:[{ data:vals, borderColor:lc, backgroundColor:t.alert?'rgba(239,68,68,0.07)':'rgba(123,140,222,0.07)', borderWidth:2, pointRadius:3, pointBackgroundColor:lc, tension:.35, fill:true }]},
+        options:{ responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}},
+          scales:{ x:{ticks:{color:'#5a5f7a',font:{size:9}},grid:{color:'#17171f'}}, y:{ticks:{color:'#5a5f7a',font:{size:9}},grid:{color:'#17171f'}} }}
+      });
+    });
+  });
+}
+
+// ── Flight comparison ──────────────────────────────────────────────────────
+function toggleCompare(e, flightId) {
+  const f = window._flightRegistry[flightId];
+  if (!f) { e.target.checked = false; showToast('Flight data not found', 'error'); return; }
+  if (e.target.checked) {
+    if (comparisonFlights.length >= 2) {
+      e.target.checked = false;
+      showToast('Only 2 flights can be compared at once', 'error'); return;
+    }
+    comparisonFlights.push(f);
+  } else {
+    comparisonFlights = comparisonFlights.filter(c => c.id !== f.id);
+  }
+  updateCompareSlots();
+}
+function updateCompareSlots() {
+  const a = comparisonFlights[0], b = comparisonFlights[1];
+  document.getElementById('slotA').textContent = a ? `${(a.flight_date||'').substring(0,10)} — ${(a.log_file||'').substring(0,20)}` : 'Not selected';
+  document.getElementById('slotA').style.color  = a ? 'var(--text)' : 'var(--text-dim)';
+  document.getElementById('slotB').textContent = b ? `${(b.flight_date||'').substring(0,10)} — ${(b.log_file||'').substring(0,20)}` : 'Not selected';
+  document.getElementById('slotB').style.color  = b ? 'var(--text)' : 'var(--text-dim)';
+  document.getElementById('compareBtn').disabled = comparisonFlights.length < 2;
+}
+function clearComparison() {
+  comparisonFlights = [];
+  updateCompareSlots();
+  document.getElementById('compareResult').style.display = 'none';
+  document.getElementById('compareSource').style.display = 'block';
+  // Uncheck all checkboxes
+  document.querySelectorAll('.compare-checkbox').forEach(c => c.checked = false);
+}
+function runComparison() {
+  if (comparisonFlights.length < 2) return;
+  const [a, b] = comparisonFlights;
+  const metrics = [
+    { key:'overall_score',               label:'Overall Score',           fmt:(v)=>v?.toFixed(1)??'--', higherBetter:true },
+    { key:'bat_internal_resistance_mohm', label:'Battery IR (mohm)',       fmt:(v)=>v?.toFixed(1)??'--', higherBetter:false },
+    { key:'bat_end_cell_v',              label:'End Cell Voltage (V)',     fmt:(v)=>v?.toFixed(3)??'--', higherBetter:true },
+    { key:'bat_capacity_remaining_pct',  label:'Battery Remaining (%)',    fmt:(v)=>v?.toFixed(1)??'--', higherBetter:true },
+    { key:'vibe_x',                      label:'Vibration X (m/s2)',      fmt:(v)=>v?.toFixed(2)??'--', higherBetter:false },
+    { key:'motor_imbalance_pct',         label:'Motor Imbalance (%)',      fmt:(v)=>v?.toFixed(1)??'--', higherBetter:false },
+    { key:'efficiency_wh_per_km',        label:'Efficiency (Wh/km)',       fmt:(v)=>v?.toFixed(2)??'--', higherBetter:false },
+    { key:'airborne_s',                  label:'Airborne Time (s)',        fmt:(v)=>v?.toFixed(0)??'--', higherBetter:true },
+    { key:'max_altitude_agl_m',          label:'Max Altitude AGL (m)',     fmt:(v)=>v?.toFixed(1)??'--', higherBetter:null },
+    { key:'crit_count',                  label:'Critical Issues',          fmt:(v)=>v??'--', higherBetter:false },
+    { key:'warn_count',                  label:'Warning Issues',           fmt:(v)=>v??'--', higherBetter:false },
+  ];
+  const rows = metrics.map(m => {
+    const av = a[m.key], bv = b[m.key];
+    let aCls='', bCls='';
+    if (m.higherBetter !== null && av != null && bv != null && av !== bv) {
+      const aWins = m.higherBetter ? av > bv : av < bv;
+      aCls = aWins ? 'compare-better' : 'compare-worse';
+      bCls = aWins ? 'compare-worse'  : 'compare-better';
+    }
+    return `<tr>
+      <td>${m.label}</td>
+      <td class="${aCls}">${m.fmt(av)}</td>
+      <td class="${bCls}">${m.fmt(bv)}</td>
+    </tr>`;
+  }).join('');
+  const res = document.getElementById('compareResult');
+  res.style.display = 'block';
+  document.getElementById('compareSource').style.display = 'none';
+  res.innerHTML = `
+    <div class="card" style="overflow:auto">
+      <div class="card-title">Flight Comparison</div>
+      <table class="compare-table">
+        <thead><tr>
+          <th style="width:45%">Metric</th>
+          <th>Flight A<br><span style="font-weight:400;color:var(--text-dim)">${(a.flight_date||'').substring(0,10)}</span></th>
+          <th>Flight B<br><span style="font-weight:400;color:var(--text-dim)">${(b.flight_date||'').substring(0,10)}</span></th>
+        </tr></thead>
+        <tbody>${rows}</tbody>
+      </table>
+      <p style="font-size:11px;color:var(--text-dim);margin-top:12px">Green = better value &nbsp;·&nbsp; Red = worse value</p>
+    </div>`;
+  switchFleetView('compare');
+  showToast('Comparison ready', 'info');
+}
+
+// ── Maintenance calendar ───────────────────────────────────────────────────
+function renderMaintenanceCalendar() {
+  if (!fleetData.length) {
+    document.getElementById('maintContent').innerHTML =
+      '<div class="empty-state"><div class="empty-icon">&#128197;</div><p>No fleet data. Run an analysis first.</p></div>';
+    return;
+  }
+  const THRESHOLDS = { motor_h:200, prop_cy:100, bat_cy:300, esc_h:200, frame_h:50 };
+  const rows = fleetData.map(d => {
+    const flights = parseInt(d.total_flights) || 0;
+    // Estimate: assume avg 20min per flight = 1/3 hour; prop/battery cycles = flight count
+    const motorH  = Math.round(flights * 0.33);
+    const propCy  = flights;
+    const batCy   = Math.round(flights * 0.8);
+    const escH    = Math.round(flights * 0.33);
+    const frameH  = Math.round(flights * 0.33);
+    function cell(used, limit) {
+      const pct = limit ? used/limit : 0;
+      if (!limit || used === 0) return `<span class="maint-cell maint-na">--</span>`;
+      if (pct >= 1.0)  return `<span class="maint-cell maint-due">OVERDUE (${used}/${limit})</span>`;
+      if (pct >= 0.75) return `<span class="maint-cell maint-warn">Due Soon (${used}/${limit})</span>`;
+      return `<span class="maint-cell maint-ok">OK (${used}/${limit})</span>`;
+    }
+    return `<tr>
+      <td><strong>${esc(d.drone_name)}</strong><br><span style="font-size:11px;color:var(--text-dim)">${d.total_flights} flights</span></td>
+      <td>${cell(motorH, THRESHOLDS.motor_h)}</td>
+      <td>${cell(propCy, THRESHOLDS.prop_cy)}</td>
+      <td>${cell(batCy, THRESHOLDS.bat_cy)}</td>
+      <td>${cell(escH, THRESHOLDS.esc_h)}</td>
+      <td>${cell(frameH, THRESHOLDS.frame_h)}</td>
+    </tr>`;
+  }).join('');
+  document.getElementById('maintContent').innerHTML = `
+    <div class="card" style="padding:0;overflow:auto">
+      <table class="maint-grid">
+        <thead><tr>
+          <th>Drone</th>
+          <th>Motor Hours<br><span style="font-weight:400">(limit ${THRESHOLDS.motor_h}h)</span></th>
+          <th>Prop Cycles<br><span style="font-weight:400">(limit ${THRESHOLDS.prop_cy})</span></th>
+          <th>Battery Cycles<br><span style="font-weight:400">(limit ${THRESHOLDS.bat_cy})</span></th>
+          <th>ESC Hours<br><span style="font-weight:400">(limit ${THRESHOLDS.esc_h}h)</span></th>
+          <th>Frame Inspection<br><span style="font-weight:400">(limit ${THRESHOLDS.frame_h}h)</span></th>
+        </tr></thead>
+        <tbody>${rows}</tbody>
+      </table>
+    </div>
+    <p style="font-size:11px;color:var(--text-dim);margin-top:8px">* Estimates based on flight count (avg 20 min/flight). Actual hours tracked when log data is available.</p>`;
+}
+
+// ── Helpers ────────────────────────────────────────────────────────────────
+function fmt(s) { return s.replace(/_/g,' ').replace(/\b\w/g,c=>c.toUpperCase()); }
+function esc(s) { return (s||'').replace(/['"&<>]/g,c=>({'\'':'&#39;','"':'&quot;','&':'&amp;','<':'&lt;','>':'&gt;'}[c])); }
+function fmtDur(s) { const m=Math.floor(s/60),sec=Math.round(s%60); return `${m}m ${sec.toString().padStart(2,'0')}s`; }
+function trendArrow(a) {
+  const m = {'↑↑':'<span class="trend-arrow trend-up-bad">&#8679;&#8679;</span>','↑':'<span class="trend-arrow trend-up-bad">&#8679;</span>','→':'<span class="trend-arrow trend-stable">&#8594;</span>','↓':'<span class="trend-arrow trend-good">&#8681;</span>','↓↓':'<span class="trend-arrow trend-good">&#8681;&#8681;</span>','':'<span class="trend-arrow trend-stable">--</span>'};
+  return m[a]||'<span class="trend-arrow trend-stable">--</span>';
+}
+async function refreshDroneIdList() {
+  try {
+    const res = await fetch('/api/fleet/drone-ids');
+    const ids = await res.json();
+    document.getElementById('droneIdList').innerHTML = ids.map(id=>`<option value="${esc(id)}">`).join('');
+  } catch(_) {}
+}
+
+// ── Init ───────────────────────────────────────────────────────────────────
+loadProfileFields('quadcopter');
+refreshDroneIdList();
+renderRecentAnalyses();
+renderPresetSelector();
+</script>
+</body>
+</html>

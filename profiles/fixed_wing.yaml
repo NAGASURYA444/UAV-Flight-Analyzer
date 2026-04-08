@@ -1,0 +1,91 @@
+# Fixed-Wing ArduPlane Profile
+# For single-engine or twin-engine pure fixed-wing aircraft (no VTOL lift motors)
+# Copy and rename for each airframe in your fleet (e.g., FW-001.yaml)
+
+id: "fixed-wing-01"
+name: "Fixed-Wing ArduPlane"
+type: fixed_wing              # multirotor | fixed_wing | vtol
+
+# ── Operational Expectations ───────────────────────────────────────────────────
+expected_endurance_min: 60    # Typical fixed-wing endurance in minutes
+expected_range_km: 40.0       # Typical operational range in km
+max_payload_kg: 1.0
+max_speed_ms: 13.5            # Cruise speed m/s
+max_altitude_m: 120.0
+
+# ── Battery Configuration ───────────────────────────────────────────────────────
+battery:
+  capacity_mah: 10000
+  cell_count: 6               # 6S = 22.2V nominal | adjust per your airframe
+  nominal_voltage: 22.2       # 6 × 3.7V
+  full_voltage: 25.2          # 6 × 4.2V
+  min_cell_voltage: 3.5
+  critical_cell_voltage: 3.3
+  max_continuous_current_a: 60.0
+  cycles_lifespan: 300
+
+# ── Motor / Throttle Configuration ─────────────────────────────────────────────
+# Fixed-wing: single throttle channel only (C3 is typical ArduPlane throttle)
+# Symmetry analysis is skipped — only throttle headroom is checked
+motors:
+  count: 1
+  channels: [3]               # ArduPlane default throttle channel
+  max_pwm: 2000
+  min_pwm: 1000
+  hover_throttle_pct: 45      # Cruise throttle % (used for headroom check)
+  high_throttle_warn_pct: 85
+  high_throttle_critical_pct: 95
+
+# ── Vibration Thresholds ───────────────────────────────────────────────────────
+vibration:
+  warn_threshold: 15.0
+  critical_threshold: 30.0
+  clip_warn_per_min: 5
+
+# ── GPS / Navigation ───────────────────────────────────────────────────────────
+gps:
+  min_satellites: 8
+  max_hdop: 1.5
+  min_fix_type: 3
+  max_position_jump_m: 15.0   # Fixed-wing moves faster — allow slightly larger jumps
+
+# ── Maintenance Schedule ───────────────────────────────────────────────────────
+maintenance:
+  motor_hours: 300
+  prop_cycles: 200
+  battery_cycles: 300
+  esc_hours: 300
+  frame_inspection_hours: 50
+
+# ── Scoring Weights ─────────────────────────────────────────────────────────────
+# Must sum to 1.0  (Phase 4.8: 17 modules)
+scoring_weights:
+  battery: 0.12
+  motors: 0.05              # Lower weight — single throttle, less diagnostic value
+  flight_overview: 0.12
+  sensors: 0.09
+  vibration: 0.05
+  control: 0.06
+  efficiency: 0.05
+  rc_link: 0.05
+  landing_wind: 0.06
+  fc_health: 0.04
+  mission: 0.05
+  airspeed: 0.05
+  pid_tuning: 0.05
+  power_rail: 0.04
+  telemetry: 0.04
+  esc_telemetry: 0.04
+  altitude_control: 0.04
+
+# ── Threshold Overrides ──────────────────────────────────────────────────────
+# Uncomment any line to override the default threshold for THIS airframe.
+# thresholds:
+#   ctl_rms_warn_deg: 4.0         # Roll/Pitch RMS warning (fixed_wing default: 4.0°)
+#   ctl_rms_critical_deg: 8.0     # Roll/Pitch RMS critical (fixed_wing default: 8.0°)
+#   ctl_large_error_deg: 8.0      # Large-error threshold per sample (default: 8.0°)
+#   ctl_large_error_pct: 5.0      # % of flight allowed with large error (default: 5%)
+#   ctl_osc_rms_warn: 4.0         # Oscillation RMS warning (default: 4.0°)
+#   ctl_osc_rms_crit: 7.0         # Oscillation RMS critical (default: 7.0°)
+#   mot_sat_warn_pct: 5.0         # Engine saturation warning % (default: 5%)
+#   mot_sat_crit_pct: 15.0        # Engine saturation critical % (default: 15%)

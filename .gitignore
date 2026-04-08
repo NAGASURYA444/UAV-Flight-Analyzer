@@ -1,0 +1,39 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+.venv/
+venv/
+env/
+
+# Flight logs (binary — large files, potentially sensitive)
+*.BIN
+*.bin
+*.log
+
+# Generated reports (re-created on analysis)
+*_report.json
+*_report.html
+reports/
+
+# Fleet database (runtime data — not source code)
+fleet.db
+fleet.db-shm
+fleet.db-wal
+
+# Temp / debug files
+*.txt
+bad_chars.txt
+bad_strings.txt
+fw_full.txt
+qp_full.txt
+quad_full.txt
+non_ascii.txt
+Phase _run_report/
+
+# Claude Code workspace settings (local only)
+.claude/
+
+# OS
+.DS_Store
+Thumbs.db

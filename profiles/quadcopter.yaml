@@ -1,0 +1,90 @@
+# Quadcopter Profile (4 Motor)
+# For ArduCopter quadcopter frames (X, +, H configs)
+# Copy and rename for each airframe in your fleet (e.g., QC-001.yaml)
+
+id: "quadcopter-01"
+name: "Quadcopter"             # display name — motor category is auto-derived from motors.count
+type: multirotor             # multirotor | fixed_wing | vtol
+
+# ── Operational Expectations ───────────────────────────────────────────────────
+expected_endurance_min: 26   # Expected flight time in minutes (set from testing)
+expected_range_km: 16.0      # Expected operational range in km
+max_payload_kg: 1.5          # Maximum rated payload
+max_speed_ms: 15.0           # Max operational speed (m/s)
+max_altitude_m: 120.0        # Max operational altitude AGL (m)
+
+# ── Battery Configuration ───────────────────────────────────────────────────────
+battery:
+  capacity_mah: 16000          # Total battery capacity in mAh
+  cell_count: 6                # Number of series cells (6S = 22.2V nominal)
+  nominal_voltage: 22.2        # Nominal pack voltage (cell_count * 3.7)
+  full_voltage: 25.2           # Fully charged voltage (cell_count * 4.2)
+  min_cell_voltage: 3.5        # Warning threshold per cell (V)
+  critical_cell_voltage: 3.3   # Failsafe / critical threshold per cell (V)
+  max_continuous_current_a: 80.0  # Max continuous draw rating (A)
+  cycles_lifespan: 300         # Expected cycle life before degradation
+
+# ── Motor / ESC Configuration ──────────────────────────────────────────────────
+motors:
+  count: 4                     # Number of motors
+  channels: [1, 2, 3, 4]      # RCOU channel numbers mapped to motors
+  max_pwm: 2000                # Max PWM output (microseconds)
+  min_pwm: 1000                # Min PWM output (microseconds)
+  # Throttle thresholds (as % of max: 0-100)
+  hover_throttle_pct: 50       # Expected hover throttle (set from testing)
+  high_throttle_warn_pct: 80   # Sustained throttle above this = overload warning
+  high_throttle_critical_pct: 92  # Sustained throttle above this = critical
+
+# ── Vibration Thresholds ───────────────────────────────────────────────────────
+vibration:
+  warn_threshold: 15.0         # m/s² — begin investigation
+  critical_threshold: 30.0     # m/s² — ground the drone
+  clip_warn_per_min: 5         # Clipping events per minute before warning
+
+# ── GPS / Navigation ───────────────────────────────────────────────────────────
+gps:
+  min_satellites: 8            # Minimum acceptable satellite count
+  max_hdop: 1.5                # Maximum acceptable HDOP (lower = better)
+  min_fix_type: 3              # Minimum fix type: 3=3D Fix, 4=DGPS, 6=RTK Fixed
+  max_position_jump_m: 10.0    # Max GPS position jump before flagging (m)
+
+# ── Maintenance Schedule ───────────────────────────────────────────────────────
+maintenance:
+  motor_hours: 200             # Motor replacement/inspection interval (hours)
+  prop_cycles: 100             # Propeller replacement interval (flight cycles)
+  battery_cycles: 300          # Battery retirement threshold (charge cycles)
+  esc_hours: 200               # ESC inspection interval (hours)
+  frame_inspection_hours: 50   # Structural inspection interval (hours)
+
+# ── Scoring Weights ─────────────────────────────────────────────────────────────
+# Must sum to 1.0  (Phase 4.8: 17 modules)
+scoring_weights:
+  battery: 0.11
+  motors: 0.08
+  flight_overview: 0.10
+  sensors: 0.09
+  vibration: 0.06
+  control: 0.06
+  efficiency: 0.04
+  rc_link: 0.05
+  landing_wind: 0.06
+  fc_health: 0.04
+  mission: 0.06
+  airspeed: 0.04
+  pid_tuning: 0.05
+  power_rail: 0.04
+  telemetry: 0.04
+  esc_telemetry: 0.04
+  altitude_control: 0.04
+
+# ── Threshold Overrides ──────────────────────────────────────────────────────
+# Uncomment any line to override the default threshold for THIS airframe.
+# thresholds:
+#   ctl_rms_warn_deg: 1.5         # Roll/Pitch RMS warning (multirotor default: 1.5°)
+#   ctl_rms_critical_deg: 3.5     # Roll/Pitch RMS critical (multirotor default: 3.5°)
+#   ctl_large_error_deg: 5.0      # Large-error threshold per sample (default: 5.0°)
+#   ctl_large_error_pct: 5.0      # % of flight allowed with large error (default: 5%)
+#   ctl_osc_rms_warn: 2.0         # Oscillation RMS warning (default: 2.0°)
+#   ctl_osc_rms_crit: 4.0         # Oscillation RMS critical (default: 4.0°)
+#   mot_sat_warn_pct: 5.0         # Motor saturation warning % (default: 5%)
+#   mot_sat_crit_pct: 15.0        # Motor saturation critical % (default: 15%)

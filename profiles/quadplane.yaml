@@ -1,0 +1,93 @@
+# Quadplane VTOL Profile — Cube Orange
+# Airframe: Fixed-Wing VTOL with quad lift motors + pusher motor
+# ArduPilot QuadPlane channel mapping:
+#   C1-C4 : Flight surfaces (aileron, elevator, rudder) + pusher throttle
+#   C5-C8 : Quad lift motors (Front-Left, Front-Right, Rear-Left, Rear-Right)
+
+id: "quadplane-01"
+name: "Quadplane VTOL - Cube Orange"
+type: vtol                       # vtol | multirotor | fixed_wing
+
+# ── Operational Expectations ───────────────────────────────────────────────────
+expected_endurance_min: 90        # Set this to your expected mission endurance before each run
+expected_range_km: 30.0          # Set this to your expected mission range before each run
+max_payload_kg: 2.0
+max_speed_ms: 25.0               # Fixed-wing cruise speed
+max_altitude_m: 150.0
+
+# ── Battery Configuration ───────────────────────────────────────────────────────
+battery:
+  capacity_mah: 22000
+  cell_count: 12                 # 12S = 44.4V nominal, 50.4V full (confirmed 50V pack)
+  nominal_voltage: 44.4
+  full_voltage: 50.4
+  min_cell_voltage: 3.5          # 42.0V pack warning threshold
+  critical_cell_voltage: 3.3     # 39.6V pack critical threshold
+  max_continuous_current_a: 100.0
+  cycles_lifespan: 300
+
+# ── Motor Configuration (Lift motors only) ─────────────────────────────────────
+# Pusher motor is on C3 — excluded from symmetry analysis (it's a different role)
+motors:
+  count: 4
+  channels: [5, 6, 7, 8]        # QuadPlane lift motors
+  max_pwm: 2000
+  min_pwm: 1000
+  hover_throttle_pct: 55         # VTOL hover needs more throttle than pure quad
+  high_throttle_warn_pct: 85
+  high_throttle_critical_pct: 95
+
+# ── Vibration Thresholds ───────────────────────────────────────────────────────
+vibration:
+  warn_threshold: 15.0
+  critical_threshold: 30.0
+  clip_warn_per_min: 5
+
+# ── GPS / Navigation ───────────────────────────────────────────────────────────
+gps:
+  min_satellites: 10             # Cube Orange with good antenna should get 10+
+  max_hdop: 1.2                  # Cube Orange GPS is more precise
+  min_fix_type: 3
+  max_position_jump_m: 10.0
+
+# ── Maintenance Schedule ───────────────────────────────────────────────────────
+maintenance:
+  motor_hours: 200
+  prop_cycles: 100
+  battery_cycles: 300
+  esc_hours: 200
+  frame_inspection_hours: 50
+
+# ── Scoring Weights ─────────────────────────────────────────────────────────────
+# Must sum to 1.0  (Phase 4.8: 18 modules)
+scoring_weights:
+  battery: 0.09
+  motors: 0.07
+  flight_overview: 0.10
+  sensors: 0.09
+  vibration: 0.04
+  control: 0.06
+  efficiency: 0.04
+  rc_link: 0.05
+  landing_wind: 0.05
+  fc_health: 0.04
+  vtol_transition: 0.06
+  mission: 0.05
+  airspeed: 0.05
+  pid_tuning: 0.05
+  power_rail: 0.04
+  telemetry: 0.04
+  esc_telemetry: 0.04
+  altitude_control: 0.04
+
+# ── Threshold Overrides ──────────────────────────────────────────────────────
+# Uncomment any line to override the default threshold for THIS airframe.
+# thresholds:
+#   ctl_rms_warn_deg: 1.5         # Roll/Pitch RMS warning (multirotor default: 1.5°)
+#   ctl_rms_critical_deg: 3.5     # Roll/Pitch RMS critical (multirotor default: 3.5°)
+#   ctl_large_error_deg: 5.0      # Large-error threshold per sample (default: 5.0°)
+#   ctl_large_error_pct: 5.0      # % of flight allowed with large error (default: 5%)
+#   ctl_osc_rms_warn: 2.0         # Oscillation RMS warning (default: 2.0°)
+#   ctl_osc_rms_crit: 4.0         # Oscillation RMS critical (default: 4.0°)
+#   mot_sat_warn_pct: 5.0         # Motor saturation warning % (default: 5%)
+#   mot_sat_crit_pct: 15.0        # Motor saturation critical % (default: 15%)
