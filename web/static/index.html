@@ -517,6 +517,7 @@ header .logo-icon { width:28px; height:28px; background:linear-gradient(135deg,v
         <input class="search-input" id="fleetSearch" type="text" placeholder="Search drones..." oninput="filterFleet(this.value)">
       </div>
       <button class="btn btn-secondary btn-sm" onclick="loadFleet()">&#8635; Refresh</button>
+      <button class="btn btn-sm" style="background:rgba(239,68,68,.15);color:#ef4444;border:1px solid rgba(239,68,68,.3)" onclick="confirmClearAll()">&#128465; Clear All Fleet Data</button>
     </div>
     <div id="fleetContent">
       <div class="empty-state"><div class="empty-icon">&#128202;</div><p>Loading fleet data...</p></div>
@@ -670,7 +671,15 @@ function renderProfileFields(p) {
   const motorCountReadonly = selectedMotorPreset ? ' readonly' : '';
   const motorCountVal = selectedMotorPreset ? selectedMotorPreset.count : (p.motors?.count ?? 4);
   const bat = p.battery || {}, mot = p.motors || {}, vib = p.vibration || {};
-  const gps = p.gps || {}, maint = p.maintenance || {};
+  const gps = p.gps || {}, maint = p.maintenance || {}, pmo = p.pusher_motor || null;
+  const pusherSection = pmo ? `
+    <div class="profile-section-title">Pusher / Cruise Motor</div>
+    ${pf('pmo_channel','Pusher Channel (RCOU)',pmo.channel??'',1)}
+    ${pf('pmo_warn_throttle','Warn Throttle (%)',pmo.high_throttle_warn_pct??'')}
+    ${pf('pmo_crit_throttle','Critical Throttle (%)',pmo.high_throttle_critical_pct??'')}
+    ${pf('pmo_max_pwm','Max PWM',pmo.max_pwm??'',1)}
+    ${pf('pmo_min_pwm','Min PWM',pmo.min_pwm??'',1)}
+  ` : '';
   document.getElementById('profileGrid').innerHTML = `
     <div class="profile-section-title">Operational</div>
     ${pf('expected_endurance_min','Expected Endurance (min)',p.expected_endurance_min??'')}
@@ -687,13 +696,14 @@ function renderProfileFields(p) {
     ${pf('bat_crit_cell_v','Critical Cell V (V)',bat.critical_cell_voltage??'')}
     ${pf('bat_max_current','Max Current (A)',bat.max_continuous_current_a??'')}
     ${pf('bat_cycles','Cycle Lifespan',bat.cycles_lifespan??'',1)}
-    <div class="profile-section-title">Motors</div>
+    <div class="profile-section-title">Lift Motors (Quad hover)</div>
     <div class="field"><label>Motor Count</label><input type="number" id="pf_mot_count" value="${motorCountVal}" step="1"${motorCountReadonly}></div>
     ${pf('mot_hover_throttle','Hover Throttle (%)',mot.hover_throttle_pct??'')}
     ${pf('mot_warn_throttle','Warn Throttle (%)',mot.high_throttle_warn_pct??'')}
     ${pf('mot_crit_throttle','Critical Throttle (%)',mot.high_throttle_critical_pct??'')}
     ${pf('mot_max_pwm','Max PWM',mot.max_pwm??'',1)}
     ${pf('mot_min_pwm','Min PWM',mot.min_pwm??'',1)}
+    ${pusherSection}
     <div class="profile-section-title">Vibration</div>
     ${pf('vib_warn','Warn Level (m/s2)',vib.warn_threshold??'')}
     ${pf('vib_crit','Critical Level (m/s2)',vib.critical_threshold??'')}
@@ -728,6 +738,10 @@ function getProfileOverrides() {
     motors:{ count:gi('mot_count'), hover_throttle_pct:g('mot_hover_throttle'),
       high_throttle_warn_pct:g('mot_warn_throttle'), high_throttle_critical_pct:g('mot_crit_throttle'),
       max_pwm:gi('mot_max_pwm'), min_pwm:gi('mot_min_pwm') },
+    pusher_motor: document.getElementById('pf_pmo_channel') ? {
+      channel:gi('pmo_channel'), high_throttle_warn_pct:g('pmo_warn_throttle'),
+      high_throttle_critical_pct:g('pmo_crit_throttle'),
+      max_pwm:gi('pmo_max_pwm'), min_pwm:gi('pmo_min_pwm') } : undefined,
     vibration:{ warn_threshold:g('vib_warn'), critical_threshold:g('vib_crit'), clip_warn_per_min:gi('vib_clip') },
     gps:{ min_satellites:gi('gps_min_sat'), max_hdop:g('gps_max_hdop'), min_fix_type:gi('gps_min_fix'), max_position_jump_m:g('gps_max_jump') },
     maintenance:{ motor_hours:g('maint_motor_h'), prop_cycles:gi('maint_prop_cy'),
@@ -780,6 +794,10 @@ function loadPreset(name) {
   set('mot_count',m.count); set('mot_hover_throttle',m.hover_throttle_pct);
   set('mot_warn_throttle',m.high_throttle_warn_pct); set('mot_crit_throttle',m.high_throttle_critical_pct);
   set('mot_max_pwm',m.max_pwm); set('mot_min_pwm',m.min_pwm);
+  const pm = preset.pusher_motor || {};
+  set('pmo_channel',pm.channel); set('pmo_warn_throttle',pm.high_throttle_warn_pct);
+  set('pmo_crit_throttle',pm.high_throttle_critical_pct);
+  set('pmo_max_pwm',pm.max_pwm); set('pmo_min_pwm',pm.min_pwm);
   const v = preset.vibration || {};
   set('vib_warn',v.warn_threshold); set('vib_crit',v.critical_threshold); set('vib_clip',v.clip_warn_per_min);
   const g = preset.gps || {};
@@ -1080,6 +1098,30 @@ async function loadFleet() {
       `<div class="error-box show">Failed to load fleet: ${esc(e.message)}</div>`;
   }
 }
+async function confirmClearAll() {
+  if (!confirm('Delete ALL fleet data? This cannot be undone.')) return;
+  try {
+    await fetch('/api/fleet', { method: 'DELETE' });
+    showToast('All fleet data cleared', 'info');
+    loadFleet();
+  } catch(e) { showToast('Delete failed: ' + e.message, 'error'); }
+}
+async function confirmDeleteDrone(droneId) {
+  if (!confirm(`Delete all flight records for "${droneId}"? This cannot be undone.`)) return;
+  try {
+    await fetch(`/api/fleet/${encodeURIComponent(droneId)}`, { method: 'DELETE' });
+    showToast(`Drone "${droneId}" removed from fleet`, 'info');
+    loadFleet();
+  } catch(e) { showToast('Delete failed: ' + e.message, 'error'); }
+}
+async function confirmDeleteFlight(flightId, droneId) {
+  if (!confirm('Delete this flight record? This cannot be undone.')) return;
+  try {
+    await fetch(`/api/fleet/${encodeURIComponent(droneId)}/flights/${flightId}`, { method: 'DELETE' });
+    showToast('Flight record deleted', 'info');
+    loadFleet();
+  } catch(e) { showToast('Delete failed: ' + e.message, 'error'); }
+}
 function renderStatCardsSkeleton() {
   document.getElementById('statCards').innerHTML =
     Array(4).fill('<div class="stat-card skeleton" style="height:90px"></div>').join('');
@@ -1165,9 +1207,12 @@ function renderFleetTable(data) {
         <td>${d.total_flights}</td>
         <td>${(d.flight_date||'').substring(0,10)}</td>
         <td>${status}</td>
+        <td onclick="event.stopPropagation()">
+          <button class="btn btn-sm" style="background:rgba(239,68,68,.12);color:#ef4444;border:1px solid rgba(239,68,68,.25);padding:3px 8px" onclick="confirmDeleteDrone('${esc(d.drone_name)}')">&#128465;</button>
+        </td>
       </tr>
       <tr id="detail-row-${dk}" style="display:none">
-        <td colspan="7" style="padding:0 0 12px 0">
+        <td colspan="8" style="padding:0 0 12px 0">
           <div id="detail-${dk}" class="drone-detail">Loading...</div>
         </td>
       </tr>`;
@@ -1177,7 +1222,7 @@ function renderFleetTable(data) {
       <table class="fleet-table">
         <thead><tr>
           ${th('drone_name','Drone ID')}${th('drone_type','Type')}${th('overall_score','Score')}
-          <th>Trend</th>${th('total_flights','Flights')}${th('flight_date','Last Flight')}<th>Status</th>
+          <th>Trend</th>${th('total_flights','Flights')}${th('flight_date','Last Flight')}<th>Status</th><th></th>
         </tr></thead>
         <tbody>${rows}</tbody>
       </table>
@@ -1252,6 +1297,7 @@ function renderDroneDetail(droneId, dk, data, el) {
       <td><span class="badge badge-${grade}">${grade}</span> ${score}</td>
       <td>${ir}</td><td>${cv}</td><td>${vx}</td><td>${issues}</td>
       <td><a href="/reports/${safeName}_${f.id}_report.html" target="_blank" class="btn btn-secondary btn-sm">&#128196;</a></td>
+      <td><button class="btn btn-sm" style="background:rgba(239,68,68,.12);color:#ef4444;border:1px solid rgba(239,68,68,.25);padding:3px 8px" onclick="confirmDeleteFlight(${f.id},'${esc(droneId)}')">&#128465;</button></td>
     </tr>`;
   }).join('');
   el.innerHTML = `
@@ -1266,7 +1312,7 @@ function renderDroneDetail(droneId, dk, data, el) {
     </div>
     <div style="overflow-x:auto">
       <table class="history-table">
-        <thead><tr><th></th><th>#</th><th>Date</th><th>Log File</th><th>Duration</th><th>Score</th><th>Bat IR</th><th>Cell V</th><th>Vibe X</th><th>Issues</th><th>Report</th></tr></thead>
+        <thead><tr><th></th><th>#</th><th>Date</th><th>Log File</th><th>Duration</th><th>Score</th><th>Bat IR</th><th>Cell V</th><th>Vibe X</th><th>Issues</th><th>Report</th><th></th></tr></thead>
         <tbody>${tableRows}</tbody>
       </table>
     </div>`;
@@ -1276,7 +1322,8 @@ function renderDroneDetail(droneId, dk, data, el) {
       if (!t || t.values.length<2) return;
       const canvas = document.getElementById(`chart-${dk}-${m.key}`);
       if (!canvas) return;
-      const labels = t.values.map((_,i)=>`F${t.values.length-i}`).reverse();
+      const dates = (history||[]).map(f=>(f.flight_date||'').substring(0,10)).filter(Boolean).reverse();
+      const labels = t.values.map((_,i)=> dates[i] || `F${i+1}`);
       const vals   = [...t.values].reverse();
       const lc = t.alert ? '#ef4444' : m.color;
       droneCharts[m.key] = new Chart(canvas, {

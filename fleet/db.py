@@ -361,5 +361,23 @@ def delete_flight(flight_id: int, db_path: Path = _DEFAULT_DB) -> None:
     logger.info("Fleet DB: deleted flight id=%d", flight_id)
 
 
+def delete_drone(drone_name: str, db_path: Path = _DEFAULT_DB) -> int:
+    """Remove ALL flight records for a given drone. Returns number of rows deleted."""
+    with _connect(db_path) as conn:
+        cur = conn.execute("DELETE FROM flights WHERE drone_name=?", (drone_name,))
+        deleted = cur.rowcount
+    logger.info("Fleet DB: deleted %d flight(s) for drone '%s'", deleted, drone_name)
+    return deleted
+
+
+def delete_all_flights(db_path: Path = _DEFAULT_DB) -> int:
+    """Wipe the entire fleet — all drones, all flights. Returns number of rows deleted."""
+    with _connect(db_path) as conn:
+        cur = conn.execute("DELETE FROM flights")
+        deleted = cur.rowcount
+    logger.info("Fleet DB: cleared all %d flight record(s)", deleted)
+    return deleted
+
+
 def get_db_path() -> Path:
     return _DEFAULT_DB

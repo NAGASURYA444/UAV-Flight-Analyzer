@@ -83,10 +83,23 @@ def analyse(result: ParseResult, profile: DroneProfile, arm_time: float = 0.0) -
     metrics["motor_count"] = len(motor_cols)
 
     is_fixed_wing = profile.type == "fixed_wing"
+    is_vtol       = profile.type == "vtol"
 
     # For fixed-wing with a single throttle channel — use simplified analysis
     if is_fixed_wing and len(motor_cols) == 1:
         return _analyse_fixed_wing_throttle(flight_rcou, motor_cols, profile, metrics)
+
+    # For VTOL: run a separate pusher motor check and exclude the pusher channel
+    # from the lift motor symmetry/headroom analysis to prevent false imbalance.
+    pusher_issues: List[Dict] = []
+    if is_vtol and profile.pusher_motor is not None:
+        pusher_col = f"C{profile.pusher_motor.channel}"
+        if pusher_col in motor_cols:
+            motor_cols = [c for c in motor_cols if c != pusher_col]
+            logger.info("Excluded pusher motor %s from lift-motor symmetry analysis.", pusher_col)
+        pusher_result = _analyse_pusher_throttle(flight_rcou, pusher_col, profile, metrics)
+        pusher_issues = pusher_result["issues"]
+        metrics.update(pusher_result["metrics"])
 
     # Extract motor PWM matrix — shape (N_samples, N_motors)
     pwm_matrix = flight_rcou[motor_cols].values.astype(float)
@@ -151,13 +164,15 @@ def analyse(result: ParseResult, profile: DroneProfile, arm_time: float = 0.0) -
     metrics["per_motor"] = per_motor_stats
 
     # ── Score ─────────────────────────────────────────────────────────────────
-    score = _compute_score(metrics, issues)
+    all_issues = issues + pusher_issues
+    score = _compute_score(metrics, all_issues)
     grade = _grade(score)
 
     avg_throttle = metrics.get("avg_throttle_pct", 0.0)
     sym_score = metrics.get("symmetry_score", 100.0)
+    lift_count = len(motor_cols)
     summary = (
-        f"Motors: {len(motor_cols)}  |  "
+        f"Motors: {lift_count}  |  "
         f"Avg throttle: {avg_throttle:.1f}%  |  "
         f"Symmetry score: {sym_score:.0f}/100"
     )
@@ -166,7 +181,7 @@ def analyse(result: ParseResult, profile: DroneProfile, arm_time: float = 0.0) -
         "score": round(score, 1),
         "grade": grade,
         "available": True,
-        "issues": issues,
+        "issues": all_issues,
         "metrics": metrics,
         "summary": summary,
     }
@@ -302,6 +317,80 @@ def _analyse_fixed_wing_throttle(
         "metrics":   metrics,
         "summary":   summary,
     }
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Pusher / cruise motor analysis (VTOL QuadPlane)
+# ─────────────────────────────────────────────────────────────────────────────
+
+def _analyse_pusher_throttle(
+    flight_rcou: pd.DataFrame,
+    pusher_col: str,
+    profile: DroneProfile,
+    metrics: Dict,
+) -> Dict[str, Any]:
+    """
+    Analyse the pusher/cruise motor channel on a VTOL QuadPlane separately
+    from the lift motors.  Uses profile.pusher_motor thresholds.
+    Returns a dict with only 'issues' and 'metrics' keys (not a full result).
+    """
+    issues: List[Dict] = []
+    pm = profile.pusher_motor  # guaranteed non-None by caller
+
+    if pusher_col not in flight_rcou.columns:
+        return {"issues": [], "metrics": {}}
+
+    min_pwm   = pm.min_pwm
+    max_pwm   = pm.max_pwm
+    pwm_range = max_pwm - min_pwm
+    if pwm_range <= 0:
+        return {"issues": [], "metrics": {}}
+
+    pwm_vals = flight_rcou[pusher_col].values.astype(float)
+    throttle = np.clip((pwm_vals - min_pwm) / pwm_range * 100.0, 0.0, 100.0)
+
+    # Only analyse samples where the pusher is actually running (> 10%)
+    active = throttle[throttle > 10.0]
+    if len(active) < 10:
+        metrics["pusher_active_pct"] = 0.0
+        return {"issues": [], "metrics": metrics}
+
+    avg_thr  = float(np.mean(active))
+    max_thr  = float(np.max(active))
+    p95_thr  = float(np.percentile(active, 95))
+    sat_frac = float(np.mean(active >= 99.0))
+    active_pct = float(len(active) / len(throttle) * 100.0)
+
+    metrics["pusher_avg_throttle_pct"] = round(avg_thr, 2)
+    metrics["pusher_max_throttle_pct"] = round(max_thr, 2)
+    metrics["pusher_p95_throttle_pct"] = round(p95_thr, 2)
+    metrics["pusher_saturation_frac"]  = round(sat_frac, 4)
+    metrics["pusher_active_pct"]       = round(active_pct, 1)
+
+    warn_thr = pm.high_throttle_warn_pct
+    crit_thr = pm.high_throttle_critical_pct
+    frac_high = float(np.mean(active > warn_thr))
+
+    if frac_high > 0.30:
+        sev = "critical" if avg_thr > crit_thr else "warning"
+        issues.append(_issue(
+            sev, "MOT-010",
+            f"Pusher/cruise motor ({pusher_col}) throttle high: "
+            f"{frac_high*100:.0f}% of cruise above {warn_thr:.0f}% "
+            f"(avg: {avg_thr:.1f}%). Check propeller pitch, airspeed, or motor health.",
+            value=round(avg_thr, 2), threshold=warn_thr,
+        ))
+
+    if sat_frac * 100 > 5.0:
+        sev = "critical" if sat_frac * 100 > 15.0 else "warning"
+        issues.append(_issue(
+            sev, "MOT-011",
+            f"Pusher motor ({pusher_col}) at full throttle {sat_frac*100:.1f}% of cruise time "
+            "— insufficient thrust margin. Check airframe drag, headwinds, or motor condition.",
+            value=round(sat_frac * 100, 2), threshold=5.0,
+        ))
+
+    return {"issues": issues, "metrics": metrics}
 
 
 # ─────────────────────────────────────────────────────────────────────────────

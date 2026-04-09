@@ -54,6 +54,15 @@ motors:
   high_throttle_warn_pct: 80   # Above this sustained = overload during hover
   high_throttle_critical_pct: 92  # Above this sustained = critical
 
+# ── Pusher / Cruise Motor ─────────────────────────────────────────────────────
+# The single forward-thrust motor used during fixed-wing cruise flight.
+pusher_motor:
+  channel: 3                   # RCOU channel (C3 = standard ArduPilot QuadPlane pusher)
+  max_pwm: 2000
+  min_pwm: 1000
+  high_throttle_warn_pct: 80
+  high_throttle_critical_pct: 92
+
 # ── Vibration Thresholds ──────────────────────────────────────────────────────
 # VTOL: stricter than fixed-wing (has lift motors); looser than pure multirotor
 # (fuselage/wing mass damps vibration more than a naked multirotor frame).

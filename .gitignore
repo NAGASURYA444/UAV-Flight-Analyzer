@@ -22,7 +22,6 @@ fleet.db-shm
 fleet.db-wal
 
 # Temp / debug files
-*.txt
 bad_chars.txt
 bad_strings.txt
 fw_full.txt

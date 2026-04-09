@@ -1404,35 +1404,46 @@ def _motor_chart(mot: Dict) -> str:
     hover_ref_raw = mot.get("expected_hover_throttle_pct", 50)
     hover_ref = hover_ref_raw if hover_ref_raw is not None else 50
 
+    # Check for pusher motor metrics (VTOL QuadPlane)
+    pusher_avg = mot.get("pusher_avg_throttle_pct")
+    pusher_max = mot.get("pusher_max_throttle_pct")
+    pusher_sat = mot.get("pusher_saturation_frac")
+    pusher_active = mot.get("pusher_active_pct")
+    has_pusher = pusher_avg is not None
+
     n       = len(per_motor)
     row_h   = 32
-    pad_l   = 38   # left for channel labels
+    pad_l   = 50   # left for channel labels (wider to fit "Pusher")
     pad_r   = 52   # right for value labels
     bar_w   = 220  # max bar width in px (SVG units)
+    # Add extra rows for pusher section: separator + pusher bar
+    pusher_rows = 3 if has_pusher else 0   # gap row + label row + bar row
     h_axis  = 30   # space below bars for axis labels
-    h_total = n * row_h + h_axis
+    h_total = (n + pusher_rows) * row_h + h_axis
     w_total = pad_l + bar_w + pad_r
 
-    # Grid lines at 25 / 50 / 75 / 100 %
+    # Grid lines at 25 / 50 / 75 / 100 % (full height including pusher)
+    total_bar_rows = n + pusher_rows
     grids = ""
     for pct in [25, 50, 75, 100]:
         x = pad_l + bar_w * pct / 100
         grids += (
-            f'<line x1="{x:.1f}" y1="0" x2="{x:.1f}" y2="{n*row_h}"'
+            f'<line x1="{x:.1f}" y1="0" x2="{x:.1f}" y2="{total_bar_rows*row_h}"'
             f' stroke="#e2e8f0" stroke-width="1"/>'
-            f'<text x="{x:.1f}" y="{n*row_h+16}" font-size="9" fill="#94a3b8"'
+            f'<text x="{x:.1f}" y="{total_bar_rows*row_h+16}" font-size="9" fill="#94a3b8"'
             f' text-anchor="middle">{pct}%</text>'
         )
 
-    # Expected hover reference
+    # Expected hover reference line (lift motor rows only)
     hx = pad_l + bar_w * hover_ref / 100
     hover_line = (
         f'<line x1="{hx:.1f}" y1="0" x2="{hx:.1f}" y2="{n*row_h}"'
         f' stroke="#f97316" stroke-width="1.5" stroke-dasharray="4,3"/>'
-        f'<text x="{hx:.1f}" y="{n*row_h+28}" font-size="8" fill="#f97316"'
+        f'<text x="{hx:.1f}" y="{total_bar_rows*row_h+28}" font-size="8" fill="#f97316"'
         f' text-anchor="middle">Hover {hover_ref:.0f}%</text>'
     )
 
+    # Lift motor bars
     bars = ""
     for i, m in enumerate(per_motor):
         y   = i * row_h
@@ -1450,11 +1461,54 @@ def _motor_chart(mot: Dict) -> str:
             f' fill="#334155" font-weight="700">{avg:.1f}%</text>'
         )
 
+    # Pusher / Cruise motor section (VTOL only)
+    pusher_svg = ""
+    if has_pusher:
+        sep_y   = n * row_h          # separator line y
+        lbl_y   = sep_y + row_h      # section label row
+        bar_y   = sep_y + 2 * row_h  # pusher bar row
+
+        pusher_avg_v = pusher_avg or 0
+        p_bar_len = bar_w * min(pusher_avg_v, 100) / 100
+        p_color = "#38bdf8" if pusher_avg_v < 70 else "#f97316" if pusher_avg_v < 85 else "#ef4444"
+        p_cy = bar_y + row_h / 2 + 4
+
+        # Separator line + section label
+        pusher_svg += (
+            f'<line x1="{pad_l}" y1="{sep_y+6}" x2="{pad_l+bar_w}" y2="{sep_y+6}"'
+            f' stroke="#cbd5e1" stroke-width="1" stroke-dasharray="4,3"/>'
+            f'<text x="{pad_l}" y="{lbl_y+4}" font-size="9" fill="#64748b"'
+            f' font-style="italic">Pusher / Cruise Motor</text>'
+        )
+        # Pusher bar
+        pusher_svg += (
+            f'<text x="{pad_l-5}" y="{p_cy:.1f}" font-size="10" fill="#0ea5e9"'
+            f' text-anchor="end" font-weight="700">PSH</text>'
+            f'<rect x="{pad_l}" y="{bar_y+6}" width="{p_bar_len:.1f}" height="{row_h-12}"'
+            f' rx="4" fill="{p_color}" opacity="0.75"/>'
+            f'<text x="{pad_l+p_bar_len+5}" y="{p_cy:.1f}" font-size="10.5"'
+            f' fill="#334155" font-weight="700">{pusher_avg_v:.1f}%</text>'
+        )
+        # Pusher stats annotation
+        stats_parts = []
+        if pusher_max is not None:
+            stats_parts.append(f"max {pusher_max:.0f}%")
+        if pusher_active is not None:
+            stats_parts.append(f"active {pusher_active:.0f}% of flight")
+        if pusher_sat is not None and pusher_sat > 0:
+            stats_parts.append(f"sat {pusher_sat*100:.1f}%")
+        if stats_parts:
+            ann_x = pad_l + bar_w + pad_r - 4
+            pusher_svg += (
+                f'<text x="{ann_x}" y="{p_cy:.1f}" font-size="8.5" fill="#64748b"'
+                f' text-anchor="end">{_esc("  |  ".join(stats_parts))}</text>'
+            )
+
     return (
         f'<div class="chart-svg-wrap">'
         f'<svg viewBox="0 0 {w_total} {h_total}" class="chart-svg"'
         f' xmlns="http://www.w3.org/2000/svg">'
-        f'{grids}{hover_line}{bars}'
+        f'{grids}{hover_line}{bars}{pusher_svg}'
         f'</svg></div>'
     )
 

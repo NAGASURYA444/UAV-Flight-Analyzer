@@ -37,6 +37,16 @@ motors:
   high_throttle_warn_pct: 85
   high_throttle_critical_pct: 95
 
+# ── Pusher / Cruise Motor ───────────────────────────────────────────────────────
+# The single forward-thrust motor used during fixed-wing cruise flight.
+# C3 is the standard ArduPilot QuadPlane pusher throttle output.
+pusher_motor:
+  channel: 3                     # RCOU channel (C3 = standard QuadPlane pusher)
+  max_pwm: 2000
+  min_pwm: 1000
+  high_throttle_warn_pct: 85
+  high_throttle_critical_pct: 95
+
 # ── Vibration Thresholds ───────────────────────────────────────────────────────
 vibration:
   warn_threshold: 15.0

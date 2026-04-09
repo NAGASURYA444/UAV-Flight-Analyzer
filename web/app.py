@@ -123,6 +123,14 @@ async def get_profile(vehicle_type: str):
             "esc_hours":                p.maintenance.esc_hours,
             "frame_inspection_hours":   p.maintenance.frame_inspection_hours,
         },
+        # Pusher/Cruise motor — VTOL QuadPlane only (None for other types)
+        "pusher_motor": {
+            "channel":                    p.pusher_motor.channel,
+            "max_pwm":                    p.pusher_motor.max_pwm,
+            "min_pwm":                    p.pusher_motor.min_pwm,
+            "high_throttle_warn_pct":     p.pusher_motor.high_throttle_warn_pct,
+            "high_throttle_critical_pct": p.pusher_motor.high_throttle_critical_pct,
+        } if p.pusher_motor is not None else None,
     }
 
 
@@ -272,6 +280,22 @@ def _apply_overrides(profile, overrides: Dict) -> None:
         v = _i(maint.get(key))
         if v is not None:
             setattr(profile.maintenance, key, v)
+
+    # Pusher/Cruise motor (VTOL QuadPlane only)
+    pmo = overrides.get("pusher_motor") or {}
+    if pmo and profile.pusher_motor is not None:
+        from analyzer.config.drone_profile import PusherMotorConfig  # lazy import OK here
+        v = _i(pmo.get("channel"))
+        if v is not None:
+            profile.pusher_motor.channel = v
+        for key in ("high_throttle_warn_pct", "high_throttle_critical_pct"):
+            v = _f(pmo.get(key))
+            if v is not None:
+                setattr(profile.pusher_motor, key, v)
+        for key in ("max_pwm", "min_pwm"):
+            v = _i(pmo.get(key))
+            if v is not None:
+                setattr(profile.pusher_motor, key, v)
 
 
 def _run_analysis(
@@ -448,6 +472,30 @@ async def get_drone_history(drone_id: str):
         },
         "alerts": alerts,
     }
+
+
+@app.delete("/api/fleet/{drone_id}/flights/{flight_id}")
+async def delete_flight(drone_id: str, flight_id: int):
+    """Delete a single flight record."""
+    from fleet import db as fleet_db
+    fleet_db.delete_flight(flight_id)
+    return {"deleted": flight_id}
+
+
+@app.delete("/api/fleet/{drone_id}")
+async def delete_drone(drone_id: str):
+    """Delete all flight records for a drone."""
+    from fleet import db as fleet_db
+    deleted = fleet_db.delete_drone(drone_id)
+    return {"drone": drone_id, "flights_deleted": deleted}
+
+
+@app.delete("/api/fleet")
+async def delete_all_fleet():
+    """Wipe all fleet data."""
+    from fleet import db as fleet_db
+    deleted = fleet_db.delete_all_flights()
+    return {"flights_deleted": deleted}
 
 
 @app.get("/api/fleet/{drone_id}/export")

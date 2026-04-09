@@ -76,6 +76,16 @@ class MaintenanceConfig:
 
 
 @dataclass
+class PusherMotorConfig:
+    """Configuration for the pusher/cruise motor on VTOL QuadPlane airframes."""
+    channel: int = 3                    # RCOU channel (typically C3 on QuadPlane)
+    max_pwm: int = 2000
+    min_pwm: int = 1000
+    high_throttle_warn_pct: float = 80.0
+    high_throttle_critical_pct: float = 92.0
+
+
+@dataclass
 class DroneProfile:
     id: str = "default"
     name: str = "Default Drone"
@@ -91,6 +101,7 @@ class DroneProfile:
     vibration: VibrationConfig = field(default_factory=VibrationConfig)
     gps: GPSConfig = field(default_factory=GPSConfig)
     maintenance: MaintenanceConfig = field(default_factory=MaintenanceConfig)
+    pusher_motor: Optional[PusherMotorConfig] = None   # VTOL QuadPlane only
 
     scoring_weights: Dict[str, float] = field(default_factory=lambda: {
         "battery": 0.30,
@@ -281,6 +292,10 @@ class DroneProfile:
         _apply(profile.vibration, data.get("vibration"))
         _apply(profile.gps, data.get("gps"))
         _apply(profile.maintenance, data.get("maintenance"))
+
+        if "pusher_motor" in data and data["pusher_motor"]:
+            profile.pusher_motor = PusherMotorConfig()
+            _apply(profile.pusher_motor, data["pusher_motor"])
 
         if "scoring_weights" in data:
             profile.scoring_weights.update(data["scoring_weights"])
