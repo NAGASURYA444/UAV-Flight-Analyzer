@@ -446,6 +446,24 @@ def _capacity_analysis(bat_df: pd.DataFrame, profile: DroneProfile) -> Dict:
     total_cap = profile.battery.capacity_mah
     used_pct = (consumed / total_cap * 100.0) if total_cap > 0 else 0.0
 
+    # Sanity check: consumed > 200% of profile capacity almost certainly means
+    # the current sensor is miscalibrated (BAT_AMP_PERVLT wrong) or the wrong
+    # profile was selected. Flag it clearly and skip misleading capacity issues.
+    if used_pct > 200.0:
+        metrics["capacity_consumed_mah"] = round(consumed, 1)
+        metrics["capacity_total_mah"] = total_cap
+        metrics["capacity_used_pct"] = round(used_pct, 1)
+        metrics["capacity_remaining_pct"] = None
+        issues.append(_issue(
+            "warning", "BAT-010",
+            f"Current sensor suspect: reported {consumed:.0f} mAh consumed vs "
+            f"{total_cap:.0f} mAh profile capacity ({used_pct:.0f}%). "
+            "Either the wrong profile is selected or BAT_AMP_PERVLT is miscalibrated. "
+            "Capacity analysis skipped — verify profile battery capacity and current sensor calibration.",
+            value=round(used_pct, 1), threshold=200,
+        ))
+        return {"issues": issues, "metrics": metrics}
+
     metrics["capacity_consumed_mah"] = round(consumed, 1)
     metrics["capacity_total_mah"] = total_cap
     metrics["capacity_used_pct"] = round(used_pct, 1)

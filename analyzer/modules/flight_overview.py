@@ -722,16 +722,22 @@ def _extract_safety_events(result: ParseResult) -> List[Dict]:
     if err_df is not None and "Subsys" in err_df.columns and "ECode" in err_df.columns:
         # Only actual error events (ECode != 0)
         errors = err_df[err_df["ECode"] != 0]
-        for _, row in errors.iterrows():
-            subsys = row.get("subsys_name", str(row.get("Subsys", "?")))
-            ecode = int(row.get("ECode", 0))
-            ts = float(row.get("timestamp", 0))
-            sev = "critical" if row.get("Subsys", 0) in (5, 6, 15, 16) else "warning"
+
+        # Aggregate by (Subsys, ECode) — emit ONE summary issue per unique error type.
+        # Emitting one issue per row causes massive score collapse when a sensor
+        # fires hundreds of repeated events (e.g. 718 radio-loss ERR events).
+        grouped = errors.groupby(["Subsys", "ECode"])
+        for (subsys_id, ecode), grp in grouped:
+            subsys_name = grp["subsys_name"].iloc[0] if "subsys_name" in grp.columns else str(subsys_id)
+            count = len(grp)
+            first_ts = float(grp["timestamp"].iloc[0])
+            sev = "critical" if subsys_id in (5, 6, 15, 16) else "warning"
+            count_str = f" (x{count})" if count > 1 else ""
             events.append({
                 "severity": sev,
-                "code": f"ERR-{row.get('Subsys', 0):02d}",
-                "message": f"Error — Subsystem: {subsys}, Code: {ecode}",
-                "timestamp": round(ts, 2),
+                "code": f"ERR-{subsys_id:02d}",
+                "message": f"Error — Subsystem: {subsys_name}, Code: {int(ecode)}{count_str}",
+                "timestamp": round(first_ts, 2),
             })
 
     return events
