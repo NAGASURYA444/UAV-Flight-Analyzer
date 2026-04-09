@@ -365,6 +365,7 @@ def _render_html(report: Dict[str, Any]) -> str:
       <div class="meta-item"><span class="meta-label">Generated</span><span class="meta-val">{gen_str}</span></div>
       <div class="meta-item no-print" style="display:flex;gap:8px;align-items:center">
         <button class="print-btn" onclick="window.print()">🖨 Print / PDF</button>
+        <button class="print-btn no-print" style="background:#0f766e;margin-left:8px" onclick="downloadReport()">&#8681; Download HTML</button>
         <button class="darkmode-btn" id="dm-toggle" onclick="toggleDark()" title="Toggle dark mode">🌙</button>
       </div>
     </div>
@@ -737,8 +738,11 @@ def _key_metrics(modules: Dict) -> str:
 
     whkm  = eff.get("wh_per_km")
     wh    = eff.get("energy_wh")
-    eff_str = f"{whkm:.1f} Wh/km" if whkm is not None else "N/A"
-    wh_str  = f"{wh:.1f} Wh"      if wh   is not None else "N/A"
+    # Mark efficiency values as suspect when battery current sensor is unreliable
+    bat_sensor_suspect = bat.get("capacity_remaining_pct") is None and \
+                         bat.get("capacity_consumed_mah", 0) > bat.get("capacity_total_mah", 1) * 2
+    eff_str = "⚠ Suspect" if bat_sensor_suspect else (f"{whkm:.1f} Wh/km" if whkm is not None else "N/A")
+    wh_str  = "⚠ Suspect" if bat_sensor_suspect else (f"{wh:.1f} Wh"      if wh   is not None else "N/A")
 
     sink    = lnd.get("descent_rate_ms")
     horiz   = lnd.get("horizontal_speed_ms")
@@ -1335,9 +1339,20 @@ def _battery_visual(bat: Dict) -> str:
     cv_s_str    = f"{cv_start:.3f} V/cell" if cv_start is not None else "—"
     cv_e_str    = f"{cv_end:.3f} V/cell"   if cv_end   is not None else "—"
     rem_str     = f"{rem_pct:.1f}%" if rem_pct is not None else "—"
+    sensor_suspect = rem_pct is None and consumed is not None and total is not None and consumed > total * 2
     cons_str    = f"{consumed:,.0f} mAh" if consumed is not None else "—"
     total_str   = f"{total:,.0f} mAh" if total is not None else "—"
     ir_str      = f"{ir:.1f} mΩ" if ir is not None else "—"
+
+    # Battery consumed row — show warning when sensor is suspect
+    if sensor_suspect:
+        bat_consumed_html = (
+            f'<div class="bat-consumed" style="color:#f97316;font-weight:600">'
+            f'&#9888; Current sensor suspect — {cons_str} reported vs {total_str} profile capacity. '
+            f'Verify BAT_AMP_PERVLT calibration or select correct profile.</div>'
+        )
+    else:
+        bat_consumed_html = f'<div class="bat-consumed">{cons_str} used of {total_str}</div>'
 
     return f"""<div class="bat-visual">
   <div class="bat-header">
@@ -1360,7 +1375,7 @@ def _battery_visual(bat: Dict) -> str:
         <span class="bat-marker bat-marker-warn" style="left:30%">30%</span>
       </div>
     </div>
-    <div class="bat-consumed">{cons_str} used of {total_str}</div>
+    {bat_consumed_html}
   </div>
 </div>"""
 
@@ -2128,6 +2143,19 @@ function initScrollSpy() {
   },{rootMargin:'-20% 0px -70% 0px'});
 
   targets.forEach(function(t){obs.observe(t.el)});
+}
+
+// ── Download HTML report ──
+function downloadReport() {
+  var html = '<!DOCTYPE html>' + document.documentElement.outerHTML;
+  var blob = new Blob([html], {type: 'text/html;charset=utf-8'});
+  var url  = URL.createObjectURL(blob);
+  var a    = document.createElement('a');
+  a.href   = url;
+  a.download = document.title.replace(/[^a-zA-Z0-9_.]/g,'_') + '.html';
+  document.body.appendChild(a);
+  a.click();
+  setTimeout(function(){ URL.revokeObjectURL(url); a.remove(); }, 1000);
 }
 
 // ── Tier-2: Dark mode toggle ──
