@@ -6,7 +6,7 @@ FastAPI backend serving the two-tab web dashboard.
 Run with:
     python run_web.py
 or:
-    uvicorn web.app:app --host 0.0.0.0 --port 8000 --reload
+    uvicorn web.app:app --host 0.0.0.0 --port 5000 --reload
 """
 
 from __future__ import annotations
@@ -15,9 +15,11 @@ import csv
 import io
 import json
 import logging
+import os
 import shutil
 import sys
 import tempfile
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
@@ -326,11 +328,20 @@ def _run_analysis(
 
     scoring_result = scoring_engine.compute(module_results, drone_profile)
 
+    # Use the uploaded file's mtime as the flight date (same logic as CLI path).
+    # log_path is the temp file on disk — its mtime is set when the upload was saved,
+    # which is close to "now", but it's the best we can do without parsing log internals.
+    # More importantly: this is stable per upload, so re-analysis of the same file
+    # produces the same flight_date rather than the analysis timestamp.
+    _log_mtime = os.path.getmtime(log_path)
+    _log_start_time = datetime.fromtimestamp(_log_mtime, tz=timezone.utc).isoformat()
+
     parse_meta = {
         "filepath":        original_filename,
         "message_count":   parse_result.message_count,
         "available_types": parse_result.available_types,
         "duration_s":      round(parse_result.duration_s, 2),
+        "log_start_time":  _log_start_time,
     }
     profile_info = {
         "id":   drone_profile.id,

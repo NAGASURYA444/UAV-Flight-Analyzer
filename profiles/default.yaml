@@ -57,15 +57,25 @@ maintenance:
   frame_inspection_hours: 50   # Structural inspection interval (hours)
 
 # ── Scoring Weights ─────────────────────────────────────────────────────────────
-# Must sum to 1.0  (Phase 3: 7 modules)
+# Must sum to 1.0 — includes all 17 active analysis modules
 scoring_weights:
-  battery: 0.20
-  motors: 0.15
-  flight_overview: 0.15
-  sensors: 0.15
-  vibration: 0.10
-  control: 0.15
-  efficiency: 0.10
+  battery: 0.11
+  motors: 0.08
+  flight_overview: 0.10
+  sensors: 0.09
+  vibration: 0.06
+  control: 0.06
+  efficiency: 0.04
+  rc_link: 0.05
+  landing_wind: 0.06
+  fc_health: 0.04
+  mission: 0.06
+  airspeed: 0.04
+  pid_tuning: 0.05
+  power_rail: 0.04
+  telemetry: 0.04
+  esc_telemetry: 0.04
+  altitude_control: 0.04
 
 # ── Threshold Overrides ──────────────────────────────────────────────────────
 # Uncomment any line to override the default threshold for THIS airframe.

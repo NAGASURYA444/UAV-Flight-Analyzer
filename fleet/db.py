@@ -178,7 +178,8 @@ def save_flight(
 
     # Prefer log start time; fall back to analysis timestamp
     flight_date = meta.get("log_start_time") or meta.get("generated_at", "")
-    analyzed_at = meta.get("generated_at", datetime.utcnow().isoformat())
+    from datetime import timezone as _tz
+    analyzed_at = meta.get("generated_at", datetime.now(_tz.utc).isoformat())
 
     row = {
         "drone_name":   drone_name,
@@ -186,7 +187,12 @@ def save_flight(
         "log_file":     log_file,
         "flight_date":  flight_date,
         "analyzed_at":  analyzed_at,
-        "duration_s":   meta.get("log_duration_s"),
+        # Prefer airborne_s (actual flight time) over raw log duration.
+        # Use explicit None check — airborne_s=0.0 is a valid value (aborted flight)
+        # and must not be replaced by log_duration_s via a falsy `or`.
+        "duration_s":   (_m(modules, "flight_overview", "airborne_s")
+                         if _m(modules, "flight_overview", "airborne_s") is not None
+                         else meta.get("log_duration_s")),
         "overall_score": summary.get("overall_score"),
         "grade":        summary.get("grade"),
         "verdict":      summary.get("verdict"),
@@ -319,10 +325,18 @@ def get_fleet_summary(db_path: Path = _DEFAULT_DB) -> List[Dict]:
                cnt.total_flights
         FROM flights f
         INNER JOIN (
-            SELECT drone_name, MAX(id) AS max_id, COUNT(*) AS total_flights
+            SELECT drone_name,
+                   MAX(flight_date) AS max_flight_date,
+                   COUNT(*) AS total_flights
             FROM flights
             GROUP BY drone_name
-        ) cnt ON f.drone_name = cnt.drone_name AND f.id = cnt.max_id
+        ) cnt ON f.drone_name = cnt.drone_name
+             AND f.flight_date = cnt.max_flight_date
+             AND f.id = (
+                 SELECT MAX(id) FROM flights
+                 WHERE drone_name = f.drone_name
+                   AND flight_date = cnt.max_flight_date
+             )
         ORDER BY COALESCE(f.overall_score, 999) ASC
     """
     with _connect(db_path) as conn:

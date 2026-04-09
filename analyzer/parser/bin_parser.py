@@ -384,7 +384,7 @@ def _build_dataframes(raw: Dict[str, List[dict]]) -> Dict[str, pd.DataFrame]:
         # Enrich MODE messages with human-readable names.
         # Auto-detect firmware: XKF4 = ArduPlane/VTOL, NKF4 = ArduCopter.
         if msg_type == "MODE" and "Mode" in df.columns:
-            is_plane = any(k in raw for k in ("XKF4", "TECS"))
+            is_plane = "XKF4" in raw
             mode_map = PLANE_MODES if is_plane else COPTER_MODES
             df["mode_name"] = df["Mode"].map(mode_map).fillna(
                 df["Mode"].astype(str)

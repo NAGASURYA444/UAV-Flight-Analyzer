@@ -10,7 +10,9 @@ from __future__ import annotations
 
 import json
 import logging
+import os
 import sys
+from datetime import datetime
 from pathlib import Path
 from typing import Optional
 
@@ -267,11 +269,19 @@ def analyze(
             stem = Path(log_file).stem
             output = str(Path(log_file).parent / f"{stem}_report.json")
 
+        # Use the log file's modification time as the flight date.
+        # This is the most reliable proxy — the .bin file is written during flight,
+        # so its mtime is close to the actual flight date even when analysed later.
+        from datetime import timezone as _tz
+        _log_mtime = os.path.getmtime(log_file)
+        _log_start_time = datetime.fromtimestamp(_log_mtime, tz=_tz.utc).isoformat()
+
         parse_meta = {
             "filepath": parse_result.filepath,
             "message_count": parse_result.message_count,
             "available_types": parse_result.available_types,
             "duration_s": round(parse_result.duration_s, 2),
+            "log_start_time": _log_start_time,
         }
         profile_info = {
             "id": drone_profile.id,

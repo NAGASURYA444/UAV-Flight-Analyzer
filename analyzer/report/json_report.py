@@ -81,6 +81,7 @@ def generate(
             "log_file": Path(log_path).name,
             "log_file_path": log_path,
             "log_duration_s": parse_result_meta.get("duration_s", 0.0),
+            "log_start_time": parse_result_meta.get("log_start_time", ""),
             "log_message_count": parse_result_meta.get("message_count", 0),
             "log_message_types": parse_result_meta.get("available_types", []),
             "drone_profile_id": profile_info.get("id", "unknown"),

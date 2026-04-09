@@ -155,8 +155,9 @@ def analyse(
     # This reliably separates upload bursts from real in-flight executions.
     total_wpts = len(nav_df)
     planned_cnums = set(nav_df["CNum"].unique())
-    executed_cnums = planned_cnums   # default: assume all executed (used for leg filtering)
-    executed_wpts = total_wpts   # default: assume all reached
+    # Default to unknown (0 confirmed) — only set to a real value when we have evidence
+    executed_cnums = planned_cnums   # used for leg filtering; stays full set when unverifiable
+    executed_wpts = None             # None = unverifiable (distinct from 0 = confirmed none reached)
 
     if "CNum" in cmd_df.columns:
         armed_cmd = cmd_df.copy()
@@ -194,16 +195,26 @@ def analyse(
                 executed_cnums = set(nav_executed["CNum"].unique()) & planned_cnums
                 executed_wpts = len(executed_cnums)
             else:
-                executed_wpts = min(1, total_wpts)
+                # Only 1 CMD row in the armed window — not enough to detect burst vs execution.
+                # Check if that single row is itself a NAV command before counting it.
+                single_row = ts_sorted.iloc[[0]]
+                nav_single = single_row[single_row["CId"].isin(NAV_COMMAND_IDS)]
+                single_cnums = set(nav_single["CNum"].unique()) & planned_cnums
+                executed_wpts = len(single_cnums)  # 0 if non-NAV, 1 only if it's a real NAV cmd
         else:
             executed_wpts = 0
 
-    completion_pct = (executed_wpts / total_wpts * 100.0) if total_wpts > 0 else 100.0
-    mission_complete = (executed_wpts >= total_wpts)
+    # completion_pct: None when unverifiable, else evidence-based percentage
+    if executed_wpts is None:
+        completion_pct = None
+        mission_complete = None
+    else:
+        completion_pct = (executed_wpts / total_wpts * 100.0) if total_wpts > 0 else 100.0
+        mission_complete = (executed_wpts >= total_wpts)
 
     metrics["total_waypoints"]    = total_wpts
-    metrics["executed_waypoints"] = executed_wpts
-    metrics["completion_pct"]     = round(completion_pct, 1)
+    metrics["executed_waypoints"] = executed_wpts if executed_wpts is not None else "unknown"
+    metrics["completion_pct"]     = round(completion_pct, 1) if completion_pct is not None else None
     metrics["mission_complete"]   = mission_complete
 
     # ── Cross-track error analysis ────────────────────────────────────────────
@@ -356,7 +367,17 @@ def analyse(
     deductions: List[str] = []
 
     # Completion — info only, no score deduction
-    if not mission_complete:
+    if mission_complete is None:
+        # CNum column absent — cannot verify completion
+        issues.append({
+            "severity": "info",
+            "code": "MSN-000",
+            "message": (
+                f"Mission completion unverifiable: CMD log lacks sequence numbers. "
+                f"Mission had {total_wpts} planned waypoints."
+            ),
+        })
+    elif not mission_complete:
         if completion_pct < COMPLETION_CRIT_PCT:
             issues.append({
                 "severity": "info",
@@ -480,7 +501,9 @@ def analyse(
     grade = _grade(score)
 
     # ── Summary ───────────────────────────────────────────────────────────────
-    if mission_complete:
+    if mission_complete is None:
+        compl_str = f"{total_wpts} WPTs planned (completion unverifiable)"
+    elif mission_complete:
         compl_str = f"{total_wpts}/{total_wpts} WPTs complete"
     else:
         compl_str = f"{executed_wpts}/{total_wpts} WPTs ({completion_pct:.0f}%)"

@@ -5,7 +5,7 @@ Run this script to start the web dashboard:
 
     python run_web.py
 
-Then open http://localhost:8000 in your browser.
+Then open http://localhost:5000 in your browser.
 """
 
 import uvicorn

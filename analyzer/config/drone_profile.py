@@ -184,7 +184,7 @@ class DroneProfile:
         dataframes = getattr(result, "dataframes", {})
 
         # ── Step 1: detect drone type ─────────────────────────────────────────
-        has_plane_fw = any(k in dataframes for k in ("XKF4", "TECS"))
+        has_plane_fw = "XKF4" in dataframes
         if has_plane_fw:
             mode_df = dataframes.get("MODE")
             is_vtol = False

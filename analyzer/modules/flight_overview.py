@@ -324,6 +324,24 @@ def _endurance_analysis(
                         f"RTL triggered with ~{remaining_pct:.0f}% battery remaining — "
                         "likely operator recall or GCS command. No energy issue detected."
                     )
+                    # Mark as intentional so severity and score are not penalised
+                    end_issues.append(_issue(
+                        "info", "OVR-003",
+                        f"Flight shorter than expected ({actual_min:.1f} min vs "
+                        f"{expected_min:.0f} min expected, {delta_pct:+.1f}%) — "
+                        f"intentional early return with ~{remaining_pct:.0f}% battery remaining. "
+                        "No health concern.",
+                        value=actual_min, threshold=expected_min,
+                    ))
+                    return {
+                        "actual_min": round(actual_min, 2),
+                        "expected_min": expected_min,
+                        "delta_min": round(delta_min, 2),
+                        "delta_pct": round(delta_pct, 1),
+                        "root_causes": root_causes,
+                        "intentional_short": True,
+                        "issues": end_issues,
+                    }
                 else:
                     root_causes.append(
                         "Mission plan completed before expected endurance — "
@@ -409,6 +427,7 @@ def _endurance_analysis(
         "delta_min": round(delta_min, 2),
         "delta_pct": round(delta_pct, 1),
         "root_causes": root_causes,
+        "intentional_short": False,
         "issues": end_issues,
     }
 
@@ -730,10 +749,10 @@ def _compute_score(
 ) -> float:
     score = 100.0
 
-    # Endurance deficit
+    # Endurance deficit — skip deduction for intentional early returns
     endo = metrics.get("endurance", {})
     delta_pct = endo.get("delta_pct", 0.0)
-    if delta_pct < -10:
+    if delta_pct < -10 and not endo.get("intentional_short", False):
         deduction = min(20.0, abs(delta_pct) * 0.4)
         score -= deduction
 
@@ -865,15 +884,42 @@ def post_analyse(
 
     endurance["root_causes"] = root_causes
 
-    # Update the OVR-003 issue message to include enriched causes
+    # ── Re-evaluate intentional_short after enrichment ────────────────────────
+    # post_analyse may have added "aircraft landed with ~N% battery remaining —
+    # flight was cut short intentionally" as a new cause.  If so, the flight is
+    # now definitively classified as intentional — downgrade OVR-003 to info and
+    # mark intentional_short=True so _compute_score skips the deduction.
+    intentional = endurance.get("intentional_short", False) or any(
+        "cut short intentionally" in c for c in root_causes
+    )
+    endurance["intentional_short"] = intentional
+
+    # Update the OVR-003 issue: message, severity, and score-deduction flag
     for issue in overview_result.get("issues", []):
         if issue.get("code") == "OVR-003":
-            issue["message"] = (
-                f"Endurance deficit: expected {endurance['expected_min']:.0f} min, "
-                f"actual {endurance['actual_min']:.1f} min ({endurance['delta_pct']:+.1f}%). "
-                f"Probable cause(s): {'; '.join(root_causes)}"
-            )
+            if intentional:
+                issue["severity"] = "info"
+                issue["message"] = (
+                    f"Flight shorter than expected ({endurance['actual_min']:.1f} min vs "
+                    f"{endurance['expected_min']:.0f} min expected, {endurance['delta_pct']:+.1f}%) — "
+                    f"intentional early return. {'; '.join(root_causes)}"
+                )
+            else:
+                issue["message"] = (
+                    f"Endurance deficit: expected {endurance['expected_min']:.0f} min, "
+                    f"actual {endurance['actual_min']:.1f} min ({endurance['delta_pct']:+.1f}%). "
+                    f"Probable cause(s): {'; '.join(root_causes)}"
+                )
             break
+
+    # Re-compute score now that intentional_short may have changed
+    overview_result["score"] = round(_compute_score(
+        overview_result.get("metrics", {}),
+        overview_result.get("issues", []),
+        profile,
+        overview_result.get("metrics", {}).get("airborne_s", 0.0) / 60.0,
+    ), 1)
+    overview_result["grade"] = _grade(overview_result["score"])
 
     return overview_result
 
