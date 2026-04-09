@@ -102,40 +102,57 @@ def analyse(
     if profile.type == "multirotor":
         return _unavailable("Not applicable for multirotor — no minimum airspeed envelope.")
 
-    # ── GPS data ──────────────────────────────────────────────────────────────
-    gps_df = result.get("GPS")
-    if gps_df is None or gps_df.empty:
-        return _unavailable("No GPS data available in this log.")
+    # ── Check for dedicated airspeed sensor (ARSP) first ─────────────────────
+    arsp_df = result.get("ARSP")
+    arsp_col = None
+    using_arsp = False
+    if arsp_df is not None and not arsp_df.empty:
+        arsp_col = next((c for c in ("Airspeed", "airspeed", "IAS", "TAS")
+                         if c in arsp_df.columns), None)
+        if arsp_col is not None:
+            using_arsp = True
+            logger.info("Dedicated airspeed sensor (ARSP) detected — using ARSP.%s", arsp_col)
 
-    # Groundspeed column
-    spd_col = next((c for c in ("Spd", "GSpd", "spd", "gspd", "GSpeed")
-                    if c in gps_df.columns), None)
-    if spd_col is None:
-        return _unavailable("GPS speed column not found (expected 'Spd' or 'GSpd').")
+    # ── GPS data (fallback when no ARSP) ─────────────────────────────────────
+    mode_df = result.get("MODE")
+
+    if using_arsp:
+        # Use ARSP sensor data
+        speed_df = arsp_df.copy()
+        spd_col  = arsp_col
+        speed_source = "Dedicated airspeed sensor (ARSP)"
+    else:
+        gps_df = result.get("GPS")
+        if gps_df is None or gps_df.empty:
+            return _unavailable("No GPS data available in this log.")
+        spd_col = next((c for c in ("Spd", "GSpd", "spd", "gspd", "GSpeed")
+                        if c in gps_df.columns), None)
+        if spd_col is None:
+            return _unavailable("GPS speed column not found (expected 'Spd' or 'GSpd').")
+        speed_df = gps_df.copy()
+        speed_source = "GPS groundspeed (proxy)"
 
     # ── Restrict to armed window ──────────────────────────────────────────────
-    gps_armed = gps_df.copy()
-    if "timestamp" in gps_armed.columns:
-        gps_armed = gps_armed[gps_armed["timestamp"] >= arm_time]
+    if "timestamp" in speed_df.columns:
+        speed_df = speed_df[speed_df["timestamp"] >= arm_time]
         if disarm_time is not None:
-            gps_armed = gps_armed[gps_armed["timestamp"] <= disarm_time]
+            speed_df = speed_df[speed_df["timestamp"] <= disarm_time]
 
     # ── Filter to cruise-phase only ────────────────────────────────────────────
-    mode_df = result.get("MODE")
     if mode_df is not None and not mode_df.empty:
         if profile.type == "vtol":
-            # Exclude Q-modes (hover/landing) — keep FW cruise segments
-            gps_armed = _filter_fw_cruise(gps_armed, mode_df)
+            speed_df = _filter_fw_cruise(speed_df, mode_df)
         elif profile.type == "fixed_wing":
-            # Restrict to known FW cruise modes (exclude MANUAL, LAND, etc.)
-            gps_armed = _filter_fw_modes_only(gps_armed, mode_df)
+            speed_df = _filter_fw_modes_only(speed_df, mode_df)
 
-    if gps_armed.empty:
-        return _unavailable("No cruise-phase GPS samples found after mode filtering.")
+    if speed_df.empty:
+        return _unavailable("No cruise-phase samples found after mode filtering.")
 
-    speeds = gps_armed[spd_col].dropna().values.astype(float)
+    speeds = speed_df[spd_col].dropna().values.astype(float)
+    # Filter out implausible values (sensor noise, pre-arm zeros)
+    speeds = speeds[speeds > 0.5]
     if len(speeds) < 10:
-        return _unavailable("Insufficient speed samples for analysis (< 10 samples).")
+        return _unavailable("Insufficient airspeed samples for analysis (< 10 samples).")
 
     # ── Thresholds ────────────────────────────────────────────────────────────
     max_spd       = float(profile.max_speed_ms)
@@ -148,38 +165,51 @@ def analyse(
     min_spd  = float(np.min(speeds))
     max_meas = float(np.max(speeds))
 
-    n_total     = len(speeds)
+    n_total       = len(speeds)
     n_below_stall  = int(np.sum(speeds < stall_proxy))
     n_above_ospeed = int(np.sum(speeds > overspeed_thr))
 
-    stall_pct    = n_below_stall  / n_total * 100.0
+    stall_pct     = n_below_stall  / n_total * 100.0
     overspeed_pct = n_above_ospeed / n_total * 100.0
-    variability  = std_spd / mean_spd if mean_spd > 0.5 else 0.0
+    variability   = std_spd / mean_spd if mean_spd > 0.5 else 0.0
 
     metrics.update({
-        "speed_source":     "GPS groundspeed (proxy)",
-        "mean_speed_ms":    round(mean_spd, 2),
-        "std_speed_ms":     round(std_spd, 2),
-        "min_speed_ms":     round(min_spd, 2),
-        "max_speed_ms":     round(max_meas, 2),
-        "stall_proxy_ms":   round(stall_proxy, 2),
-        "overspeed_thr_ms": round(overspeed_thr, 2),
-        "stall_time_pct":   round(stall_pct, 1),
-        "overspeed_pct":    round(overspeed_pct, 1),
+        "speed_source":      speed_source,
+        "using_arsp":        using_arsp,
+        "mean_speed_ms":     round(mean_spd, 2),
+        "std_speed_ms":      round(std_spd, 2),
+        "min_speed_ms":      round(min_spd, 2),
+        "max_speed_ms":      round(max_meas, 2),
+        "stall_proxy_ms":    round(stall_proxy, 2),
+        "overspeed_thr_ms":  round(overspeed_thr, 2),
+        "stall_time_pct":    round(stall_pct, 1),
+        "overspeed_pct":     round(overspeed_pct, 1),
         "variability_ratio": round(variability, 3),
-        "sample_count":     n_total,
+        "sample_count":      n_total,
     })
 
-    # Always-info: GPS groundspeed proxy notice
-    issues.append({
-        "severity": "info",
-        "code": "ASP-001",
-        "message": (
-            f"Airspeed analysis uses GPS groundspeed as a proxy (no ARSP sensor). "
-            f"Mean {mean_spd:.1f} m/s  |  min {min_spd:.1f} m/s  |  max {max_meas:.1f} m/s  "
-            f"({n_total} cruise samples)."
-        ),
-    })
+    # ASP-001: info notice — GPS proxy OR ARSP detected
+    if using_arsp:
+        issues.append({
+            "severity": "info",
+            "code": "ASP-001",
+            "message": (
+                f"Dedicated airspeed sensor (ARSP) detected and used. "
+                f"Mean {mean_spd:.1f} m/s  |  min {min_spd:.1f} m/s  |  max {max_meas:.1f} m/s  "
+                f"({n_total} cruise samples)."
+            ),
+        })
+    else:
+        issues.append({
+            "severity": "info",
+            "code": "ASP-001",
+            "message": (
+                f"Airspeed analysis uses GPS groundspeed as a proxy (no ARSP sensor detected). "
+                f"Mean {mean_spd:.1f} m/s  |  min {min_spd:.1f} m/s  |  max {max_meas:.1f} m/s  "
+                f"({n_total} cruise samples). Install a dedicated airspeed sensor (ARSP) "
+                f"for more accurate stall and overspeed protection."
+            ),
+        })
 
     # ── Scoring ───────────────────────────────────────────────────────────────
     score = 100.0
@@ -248,7 +278,8 @@ def analyse(
     grade = _grade(score)
 
     # ── Summary ───────────────────────────────────────────────────────────────
-    summary = f"Mean {mean_spd:.1f} m/s  |  min {min_spd:.1f} m/s  |  max {max_meas:.1f} m/s  [GPS proxy]"
+    src_tag = "ARSP sensor" if using_arsp else "GPS proxy"
+    summary = f"Mean {mean_spd:.1f} m/s  |  min {min_spd:.1f} m/s  |  max {max_meas:.1f} m/s  [{src_tag}]"
     if deductions:
         summary += "  [" + ", ".join(deductions) + "]"
 
