@@ -1,0 +1,3443 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>UAV Flight Analyzer — Technical Documentation & User Manual</title>
+<style>
+
+/* ===== Reset & Page ===== */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+@page {
+    size: A4;
+    margin: 22mm 18mm 22mm 22mm;
+}
+
+body {
+    font-family: 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+    font-size: 10pt;
+    line-height: 1.6;
+    color: #1a1a2e;
+    background: #ffffff;
+}
+
+/* ===== Cover Page ===== */
+.cover {
+    page-break-after: always;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: flex-start;
+    min-height: 240mm;
+    padding: 30mm 20mm;
+    background: #0f1b35;
+    color: #ffffff;
+}
+
+.cover .logo-line {
+    font-size: 11pt;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: #7eb3e8;
+    margin-bottom: 8mm;
+}
+
+.cover h1 {
+    font-size: 28pt;
+    font-weight: 700;
+    line-height: 1.2;
+    color: #ffffff;
+    margin-bottom: 4mm;
+}
+
+.cover .subtitle {
+    font-size: 13pt;
+    color: #a8c4e0;
+    margin-bottom: 16mm;
+}
+
+.cover .meta-table {
+    border-collapse: collapse;
+    margin-top: 4mm;
+}
+
+.cover .meta-table td {
+    padding: 2mm 6mm 2mm 0;
+    font-size: 10pt;
+    color: #c8d8ec;
+    border: none;
+    background: transparent;
+}
+
+.cover .meta-table td:first-child {
+    color: #7eb3e8;
+    font-weight: 600;
+    min-width: 30mm;
+}
+
+.cover .accent-bar {
+    width: 60mm;
+    height: 1mm;
+    background: #3a7bd5;
+    margin-bottom: 6mm;
+}
+
+/* ===== TOC Page ===== */
+.toc-section {
+    page-break-after: always;
+    padding: 0 0 8mm 0;
+}
+
+.toc-section h2 {
+    font-size: 16pt;
+    color: #0f1b35;
+    border-bottom: 2px solid #3a7bd5;
+    padding-bottom: 3mm;
+    margin-bottom: 5mm;
+}
+
+.toc-section ul {
+    list-style: none;
+    padding: 0;
+}
+
+.toc-section li {
+    padding: 1.5mm 0;
+    font-size: 10pt;
+    border-bottom: 1px dotted #d0d8e8;
+    display: flex;
+    justify-content: space-between;
+}
+
+.toc-section li a {
+    color: #1a3a6e;
+    text-decoration: none;
+}
+
+/* ===== Headings ===== */
+h1, h2, h3, h4, h5 {
+    font-family: 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+    color: #0f1b35;
+    line-height: 1.3;
+}
+
+h1 {
+    font-size: 20pt;
+    margin: 0 0 4mm 0;
+    color: #0f1b35;
+}
+
+h2 {
+    font-size: 15pt;
+    font-weight: 700;
+    color: #0f1b35;
+    border-bottom: 2px solid #3a7bd5;
+    padding-bottom: 2mm;
+    margin: 10mm 0 4mm 0;
+    page-break-before: always;
+    page-break-after: avoid;
+}
+
+h2:first-of-type {
+    page-break-before: avoid;
+}
+
+h3 {
+    font-size: 12pt;
+    font-weight: 600;
+    color: #1a3a6e;
+    margin: 6mm 0 2mm 0;
+    page-break-after: avoid;
+}
+
+h4 {
+    font-size: 10.5pt;
+    font-weight: 600;
+    color: #2a4a7e;
+    margin: 4mm 0 2mm 0;
+    page-break-after: avoid;
+}
+
+/* ===== Paragraphs & Text ===== */
+p {
+    margin: 0 0 3mm 0;
+    text-align: justify;
+}
+
+strong { color: #0f1b35; }
+
+em { color: #2a4a7e; }
+
+/* ===== Tables ===== */
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 3mm 0 5mm 0;
+    font-size: 9pt;
+    page-break-inside: avoid;
+}
+
+thead tr {
+    background: #0f1b35;
+    color: #ffffff;
+}
+
+thead th {
+    padding: 2.5mm 3mm;
+    text-align: left;
+    font-weight: 600;
+    font-size: 8.5pt;
+    letter-spacing: 0.3px;
+}
+
+tbody tr:nth-child(even) {
+    background: #f0f4fb;
+}
+
+tbody tr:nth-child(odd) {
+    background: #ffffff;
+}
+
+tbody td {
+    padding: 2mm 3mm;
+    border-bottom: 1px solid #dde4f0;
+    vertical-align: top;
+}
+
+/* Severity column color-coding */
+tbody td:nth-child(2) {
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+/* ===== Code Blocks ===== */
+pre {
+    background: #1a1a2e;
+    color: #c8d8ec;
+    border-radius: 3px;
+    padding: 4mm;
+    margin: 3mm 0 4mm 0;
+    font-size: 8.5pt;
+    line-height: 1.5;
+    overflow-x: auto;
+    page-break-inside: avoid;
+    border-left: 3px solid #3a7bd5;
+}
+
+code {
+    font-family: 'Consolas', 'Courier New', monospace;
+}
+
+p code, li code, td code {
+    background: #e8eef8;
+    color: #1a3a6e;
+    padding: 0.3mm 1.5mm;
+    border-radius: 2px;
+    font-size: 8.5pt;
+}
+
+/* ===== Lists ===== */
+ul, ol {
+    margin: 2mm 0 3mm 5mm;
+    padding-left: 5mm;
+}
+
+li {
+    margin: 1mm 0;
+    line-height: 1.5;
+}
+
+/* ===== Horizontal Rule ===== */
+hr {
+    border: none;
+    border-top: 1px solid #c0cce0;
+    margin: 6mm 0;
+}
+
+/* ===== Severity Color-coding ===== */
+.sev-critical { color: #c0392b; }
+.sev-warning  { color: #d68910; }
+.sev-info     { color: #1a6ea8; }
+
+/* ===== Note Blocks ===== */
+blockquote {
+    background: #eef3fb;
+    border-left: 3px solid #3a7bd5;
+    padding: 3mm 4mm;
+    margin: 3mm 0;
+    font-size: 9pt;
+    color: #2a4a7e;
+}
+
+/* ===== Footer / Page numbers handled by @page ===== */
+
+</style>
+</head>
+<body>
+
+<!-- ========== COVER PAGE ========== -->
+<div class="cover">
+  <div class="logo-line">Technical Documentation</div>
+  <h1>UAV Flight Analyzer</h1>
+  <div class="subtitle">Technical Documentation &amp; User Manual</div>
+  <div class="accent-bar"></div>
+  <table class="meta-table">
+    <tr><td>Version</td><td>1.0</td></tr>
+    <tr><td>Date</td><td>April 2026</td></tr>
+    <tr><td>Platform</td><td>ArduPilot DataFlash .BIN Log Analysis</td></tr>
+    <tr><td>Modules</td><td>18 Analysis Modules</td></tr>
+    <tr><td>Vehicle Types</td><td>Quadcopter &bull; VTOL &bull; Fixed-Wing</td></tr>
+    <tr><td>Output Formats</td><td>HTML Report &bull; JSON &bull; Fleet SQLite</td></tr>
+  </table>
+</div>
+
+<!-- ========== DOCUMENT BODY ========== -->
+<div class="doc-body">
+<h1 id="uav-flight-analyzer-technical-documentation-user-manual">UAV Flight Analyzer — Technical Documentation &amp; User Manual</h1>
+
+<p><strong>Version:</strong> 1.0<br />
+<strong>Date:</strong> April 2026<br />
+<strong>Platform:</strong> ArduPilot DataFlash <code>.BIN</code> Log Analysis</p>
+
+<hr />
+
+<h2 id="table-of-contents">Table of Contents</h2>
+
+<ol>
+<li><a href="#1-introduction">Introduction</a></li>
+<li><a href="#2-installation--setup">Installation &amp; Setup</a></li>
+<li><a href="#3-quick-start-workflow">Quick Start Workflow</a></li>
+<li><a href="#4-web-ui--analyze-tab">Web UI — Analyze Tab</a></li>
+<li><a href="#5-web-ui--fleet-dashboard">Web UI — Fleet Dashboard</a></li>
+<li><a href="#6-vehicle-profiles--yaml-reference">Vehicle Profiles &amp; YAML Reference</a></li>
+<li><a href="#7-analysis-modules-reference">Analysis Modules Reference</a></li>
+<li><a href="#8-scoring--grading-system">Scoring &amp; Grading System</a></li>
+<li><a href="#9-fleet--trend-monitoring">Fleet &amp; Trend Monitoring</a></li>
+<li><a href="#10-cli-reference">CLI Reference</a></li>
+<li><a href="#11-api-reference">API Reference</a></li>
+<li><a href="#12-troubleshooting--faq">Troubleshooting &amp; FAQ</a></li>
+<li><a href="#13-glossary">Glossary</a></li>
+</ol>
+
+<hr />
+
+<h2 id="1-introduction">1. Introduction</h2>
+
+<h3 id="11-what-is-uav-flight-analyzer">1.1 What Is UAV Flight Analyzer?</h3>
+
+<p>UAV Flight Analyzer is a <strong>local web application</strong> for analyzing ArduPilot flight logs. It reads raw DataFlash <code>.BIN</code> files directly from the flight controller SD card, runs 18 independent analysis modules across every critical flight health domain, assigns a weighted score from 0 to 100, and generates professional HTML and JSON reports.</p>
+
+<p>No data leaves your machine. No internet connection is required. All processing, storage, and reporting is local.</p>
+
+<h3 id="12-problems-it-solves">1.2 Problems It Solves</h3>
+
+<table>
+<thead>
+<tr>
+  <th>Problem</th>
+  <th>How the Tool Addresses It</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td>Manual log review takes too long</td>
+  <td>Automated scoring and issue detection in seconds</td>
+</tr>
+<tr>
+  <td>Maintenance decisions are subjective</td>
+  <td>Standardized issue codes and thresholds</td>
+</tr>
+<tr>
+  <td>Hard to spot fleet-wide deterioration</td>
+  <td>Per-drone trend tracking with linear regression alerts</td>
+</tr>
+<tr>
+  <td>Difficult to compare airframes</td>
+  <td>Weighted scoring across 18 domains in one number</td>
+</tr>
+<tr>
+  <td>Reports not shareable</td>
+  <td>Self-contained HTML report, downloadable JSON</td>
+</tr>
+</tbody>
+</table>
+
+<h3 id="13-target-users">1.3 Target Users</h3>
+
+<ul>
+<li><strong>Flight Operators</strong> — review each mission log before the next flight</li>
+<li><strong>Maintenance Engineers</strong> — act on critical and warning issue codes</li>
+<li><strong>Fleet Managers</strong> — monitor trends across multiple drones</li>
+<li><strong>Integration Developers</strong> — automate analysis via REST API</li>
+</ul>
+
+<h3 id="14-system-requirements">1.4 System Requirements</h3>
+
+<table>
+<thead>
+<tr>
+  <th>Requirement</th>
+  <th>Minimum</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td>Python</td>
+  <td>3.10 or newer</td>
+</tr>
+<tr>
+  <td>Operating System</td>
+  <td>Windows 10/11, macOS 12+, Ubuntu 20.04+</td>
+</tr>
+<tr>
+  <td>RAM</td>
+  <td>512 MB free</td>
+</tr>
+<tr>
+  <td>Input Format</td>
+  <td>ArduPilot DataFlash <code>.BIN</code> only</td>
+</tr>
+<tr>
+  <td>Browser</td>
+  <td>Chrome, Firefox, Edge, Safari (for web UI)</td>
+</tr>
+</tbody>
+</table>
+
+<hr />
+
+<h2 id="2-installation-setup">2. Installation &amp; Setup</h2>
+
+<h3 id="21-clone-the-repository">2.1 Clone the Repository</h3>
+
+<div class="codehilite">
+<pre><span></span><code>git<span class="w"> </span>clone<span class="w"> </span>https://github.com/NAGASURYA444/UAV-Flight-Analyzer.git
+<span class="nb">cd</span><span class="w"> </span>UAV-Flight-Analyzer
+</code></pre>
+</div>
+
+<h3 id="22-create-a-virtual-environment-recommended">2.2 Create a Virtual Environment (Recommended)</h3>
+
+<div class="codehilite">
+<pre><span></span><code>python<span class="w"> </span>-m<span class="w"> </span>venv<span class="w"> </span>venv
+</code></pre>
+</div>
+
+<p>Activate the environment:</p>
+
+<p><strong>Windows:</strong></p>
+
+<div class="codehilite">
+<pre><span></span><code>venv<span class="se">\S</span>cripts<span class="se">\a</span>ctivate
+</code></pre>
+</div>
+
+<p><strong>macOS / Linux:</strong></p>
+
+<div class="codehilite">
+<pre><span></span><code><span class="nb">source</span><span class="w"> </span>venv/bin/activate
+</code></pre>
+</div>
+
+<h3 id="23-install-dependencies">2.3 Install Dependencies</h3>
+
+<div class="codehilite">
+<pre><span></span><code>pip<span class="w"> </span>install<span class="w"> </span>-r<span class="w"> </span>requirements.txt
+</code></pre>
+</div>
+
+<p>Key dependencies installed:</p>
+
+<table>
+<thead>
+<tr>
+  <th>Package</th>
+  <th>Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td><code>pymavlink</code></td>
+  <td>ArduPilot DataFlash <code>.BIN</code> parser</td>
+</tr>
+<tr>
+  <td><code>pandas</code></td>
+  <td>Telemetry data processing</td>
+</tr>
+<tr>
+  <td><code>numpy</code> / <code>scipy</code></td>
+  <td>Statistical analysis, FFT, regression</td>
+</tr>
+<tr>
+  <td><code>pyyaml</code></td>
+  <td>Vehicle profile YAML loading</td>
+</tr>
+<tr>
+  <td><code>fastapi</code> / <code>uvicorn</code></td>
+  <td>Web server and REST API</td>
+</tr>
+<tr>
+  <td><code>click</code> / <code>rich</code></td>
+  <td>CLI interface and terminal output</td>
+</tr>
+<tr>
+  <td><code>python-multipart</code></td>
+  <td>File upload handling</td>
+</tr>
+</tbody>
+</table>
+
+<h3 id="24-start-the-web-server">2.4 Start the Web Server</h3>
+
+<div class="codehilite">
+<pre><span></span><code>python<span class="w"> </span>run_web.py
+</code></pre>
+</div>
+
+<p>Open your browser at: <strong>http://localhost:5000</strong></p>
+
+<p>The server is ready when you see:</p>
+
+<pre><code>INFO:     Uvicorn running on http://0.0.0.0:5000 (Press CTRL+C to quit)
+</code></pre>
+
+<h3 id="25-daily-use">2.5 Daily Use</h3>
+
+<p>After first-time setup, just activate and run:</p>
+
+<div class="codehilite">
+<pre><span></span><code><span class="c1"># Windows</span>
+venv<span class="se">\S</span>cripts<span class="se">\a</span>ctivate
+python<span class="w"> </span>run_web.py
+
+<span class="c1"># macOS / Linux</span>
+<span class="nb">source</span><span class="w"> </span>venv/bin/activate
+python<span class="w"> </span>run_web.py
+</code></pre>
+</div>
+
+<hr />
+
+<h2 id="3-quick-start-workflow">3. Quick Start Workflow</h2>
+
+<h3 id="31-web-ui-path-recommended">3.1 Web UI Path (Recommended)</h3>
+
+<pre><code>Step 1 → Open http://localhost:5000 in your browser
+Step 2 → Click the Analyze tab
+Step 3 → Enter a Drone ID (e.g. "UAV-001")
+Step 4 → Select Vehicle Type (Quadcopter / VTOL / Fixed-Wing)
+Step 5 → Drag and drop your .BIN file onto the upload zone
+Step 6 → (Optional) Expand Profile Settings and adjust thresholds
+Step 7 → Click Run Analysis
+Step 8 → Review score, issues, and download the HTML report
+</code></pre>
+
+<h3 id="32-cli-path">3.2 CLI Path</h3>
+
+<div class="codehilite">
+<pre><span></span><code><span class="c1"># Analyze with HTML report output</span>
+python<span class="w"> </span>cli.py<span class="w"> </span>analyze<span class="w"> </span>Quadcoptor_01.BIN<span class="w"> </span>--profile<span class="w"> </span>profiles/quadcopter.yaml<span class="w"> </span>--html
+
+<span class="c1"># View fleet overview</span>
+python<span class="w"> </span>cli.py<span class="w"> </span>fleet
+</code></pre>
+</div>
+
+<h3 id="33-output-files">3.3 Output Files</h3>
+
+<table>
+<thead>
+<tr>
+  <th>Output</th>
+  <th>Location</th>
+  <th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td>JSON report</td>
+  <td>Same folder as input <code>.BIN</code></td>
+  <td>Machine-readable full analysis</td>
+</tr>
+<tr>
+  <td>HTML report</td>
+  <td><code>reports/</code> folder</td>
+  <td>Self-contained, shareable report</td>
+</tr>
+<tr>
+  <td>Fleet database</td>
+  <td><code>fleet.db</code></td>
+  <td>SQLite, auto-created</td>
+</tr>
+</tbody>
+</table>
+
+<hr />
+
+<h2 id="4-web-ui-analyze-tab">4. Web UI — Analyze Tab</h2>
+
+<h3 id="41-upload-zone">4.1 Upload Zone</h3>
+
+<p>Drag and drop a <code>.BIN</code> file onto the upload area, or click to browse. Only ArduPilot DataFlash <code>.BIN</code> files are accepted. Files must come directly from the flight controller SD card — not <code>.tlog</code> (telemetry) or <code>.log</code> (text) formats.</p>
+
+<h3 id="42-drone-configuration">4.2 Drone Configuration</h3>
+
+<p><strong>Drone ID</strong> — A text label that groups all flights from this airframe together in the fleet database. Use a stable, consistent name such as <code>UAV-001</code> or <code>QuadPlane-Survey</code>. Changing this ID creates a new drone entry in the database.</p>
+
+<p><strong>Vehicle Type</strong> — Selects the analysis context and profile:</p>
+
+<table>
+<thead>
+<tr>
+  <th>Category</th>
+  <th>Sub-types</th>
+  <th>Backend Profile</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td>Rotorcraft</td>
+  <td>Quadcopter (4 motors)</td>
+  <td><code>quadcopter</code></td>
+</tr>
+<tr>
+  <td>Rotorcraft</td>
+  <td>Hexacopter (6 motors)</td>
+  <td><code>quadcopter</code> with motor override</td>
+</tr>
+<tr>
+  <td>Rotorcraft</td>
+  <td>Octocopter (8 motors)</td>
+  <td><code>quadcopter</code> with motor override</td>
+</tr>
+<tr>
+  <td>VTOL Hybrid</td>
+  <td>QuadPlane</td>
+  <td><code>quadplane</code></td>
+</tr>
+<tr>
+  <td>Fixed-Wing</td>
+  <td>Fixed-Wing</td>
+  <td><code>fixed_wing</code></td>
+</tr>
+</tbody>
+</table>
+
+<p>Hexacopter and Octocopter sub-types automatically inject the correct motor count and channel assignments into the profile before analysis runs.</p>
+
+<h3 id="43-profile-settings-panel">4.3 Profile Settings Panel</h3>
+
+<p>Click <strong>Profile Settings</strong> to expand the configuration panel. All thresholds are pre-filled from the selected vehicle profile. Adjust any field to customize the analysis for your specific airframe.</p>
+
+<p>Fields are organized into sections:</p>
+
+<h4 id="operational-parameters">Operational Parameters</h4>
+
+<table>
+<thead>
+<tr>
+  <th>Field</th>
+  <th>Unit</th>
+  <th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td>Expected Endurance</td>
+  <td>minutes</td>
+  <td>Planned flight duration — drives endurance deficit detection</td>
+</tr>
+<tr>
+  <td>Expected Range</td>
+  <td>km</td>
+  <td>Planned mission range</td>
+</tr>
+<tr>
+  <td>Max Payload</td>
+  <td>kg</td>
+  <td>Payload capacity</td>
+</tr>
+<tr>
+  <td>Max Speed</td>
+  <td>m/s</td>
+  <td>Operating speed limit — used for airspeed envelope</td>
+</tr>
+<tr>
+  <td>Max Altitude</td>
+  <td>m</td>
+  <td>Operating altitude limit</td>
+</tr>
+</tbody>
+</table>
+
+<h4 id="battery">Battery</h4>
+
+<table>
+<thead>
+<tr>
+  <th>Field</th>
+  <th>Unit</th>
+  <th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td>Cell Count</td>
+  <td>integer</td>
+  <td>Number of LiPo cells in series</td>
+</tr>
+<tr>
+  <td>Capacity</td>
+  <td>mAh</td>
+  <td>Pack capacity</td>
+</tr>
+<tr>
+  <td>Full Voltage</td>
+  <td>V</td>
+  <td>Pack voltage at full charge</td>
+</tr>
+<tr>
+  <td>Nominal Voltage</td>
+  <td>V</td>
+  <td>Pack nominal operating voltage</td>
+</tr>
+<tr>
+  <td>Min Cell Voltage</td>
+  <td>V</td>
+  <td>Per-cell warning threshold</td>
+</tr>
+<tr>
+  <td>Critical Cell Voltage</td>
+  <td>V</td>
+  <td>Per-cell critical/failsafe threshold</td>
+</tr>
+<tr>
+  <td>Max Continuous Current</td>
+  <td>A</td>
+  <td>Rated maximum current</td>
+</tr>
+<tr>
+  <td>Cycle Lifespan</td>
+  <td>cycles</td>
+  <td>Expected pack cycle life before retirement</td>
+</tr>
+</tbody>
+</table>
+
+<h4 id="motors-lift">Motors (Lift)</h4>
+
+<table>
+<thead>
+<tr>
+  <th>Field</th>
+  <th>Unit</th>
+  <th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td>Motor Count</td>
+  <td>integer</td>
+  <td>Number of lift motors (locked when Hex/Octo preset active)</td>
+</tr>
+<tr>
+  <td>Hover Throttle</td>
+  <td>%</td>
+  <td>Expected hover throttle — baseline for load analysis</td>
+</tr>
+<tr>
+  <td>Warn Throttle</td>
+  <td>%</td>
+  <td>High throttle warning threshold</td>
+</tr>
+<tr>
+  <td>Critical Throttle</td>
+  <td>%</td>
+  <td>High throttle critical threshold</td>
+</tr>
+<tr>
+  <td>Max PWM</td>
+  <td>µs</td>
+  <td>ESC maximum signal</td>
+</tr>
+<tr>
+  <td>Min PWM</td>
+  <td>µs</td>
+  <td>ESC minimum signal</td>
+</tr>
+</tbody>
+</table>
+
+<h4 id="pusher-cruise-motor-vtol-only">Pusher / Cruise Motor (VTOL only)</h4>
+
+<table>
+<thead>
+<tr>
+  <th>Field</th>
+  <th>Unit</th>
+  <th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td>Pusher Channel</td>
+  <td>RCOU ch</td>
+  <td>ArduPilot output channel for cruise motor (default: C3)</td>
+</tr>
+<tr>
+  <td>Max PWM</td>
+  <td>µs</td>
+  <td>Pusher ESC maximum signal</td>
+</tr>
+<tr>
+  <td>Min PWM</td>
+  <td>µs</td>
+  <td>Pusher ESC minimum signal</td>
+</tr>
+<tr>
+  <td>Warn Throttle</td>
+  <td>%</td>
+  <td>Cruise motor high throttle warning</td>
+</tr>
+<tr>
+  <td>Critical Throttle</td>
+  <td>%</td>
+  <td>Cruise motor saturation threshold</td>
+</tr>
+</tbody>
+</table>
+
+<h4 id="vibration">Vibration</h4>
+
+<table>
+<thead>
+<tr>
+  <th>Field</th>
+  <th>Unit</th>
+  <th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td>Warn Level</td>
+  <td>m/s²</td>
+  <td>Vibration mean warning threshold</td>
+</tr>
+<tr>
+  <td>Critical Level</td>
+  <td>m/s²</td>
+  <td>Vibration mean critical threshold</td>
+</tr>
+<tr>
+  <td>Clip Warn / min</td>
+  <td>events/min</td>
+  <td>IMU clipping rate warning threshold</td>
+</tr>
+</tbody>
+</table>
+
+<h4 id="gps-navigation">GPS / Navigation</h4>
+
+<table>
+<thead>
+<tr>
+  <th>Field</th>
+  <th>Unit</th>
+  <th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td>Min Satellites</td>
+  <td>count</td>
+  <td>Minimum acceptable satellite count</td>
+</tr>
+<tr>
+  <td>Max HDOP</td>
+  <td>—</td>
+  <td>Maximum acceptable Horizontal Dilution of Precision</td>
+</tr>
+<tr>
+  <td>Min Fix Type</td>
+  <td>—</td>
+  <td>2=2D, 3=3D, 4=DGPS, 6=RTK Fixed</td>
+</tr>
+<tr>
+  <td>Max Position Jump</td>
+  <td>m</td>
+  <td>Maximum tolerated instantaneous GPS jump</td>
+</tr>
+</tbody>
+</table>
+
+<h4 id="maintenance-schedule">Maintenance Schedule</h4>
+
+<table>
+<thead>
+<tr>
+  <th>Field</th>
+  <th>Unit</th>
+  <th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td>Motor Hours</td>
+  <td>hours</td>
+  <td>Lift motor inspection interval</td>
+</tr>
+<tr>
+  <td>Prop Cycles</td>
+  <td>flight cycles</td>
+  <td>Propeller replacement interval</td>
+</tr>
+<tr>
+  <td>Battery Cycles</td>
+  <td>charge cycles</td>
+  <td>Battery retirement threshold</td>
+</tr>
+<tr>
+  <td>ESC Hours</td>
+  <td>hours</td>
+  <td>ESC inspection interval</td>
+</tr>
+<tr>
+  <td>Frame Inspection Hours</td>
+  <td>hours</td>
+  <td>Structural inspection interval</td>
+</tr>
+</tbody>
+</table>
+
+<h3 id="44-presets">4.4 Presets</h3>
+
+<p>Presets save the current profile settings in your browser's local storage. Use them to quickly switch between different airframe configurations without re-entering all fields.</p>
+
+<ul>
+<li><strong>Save Preset</strong> — enter a name and save current field values</li>
+<li><strong>Load Preset</strong> — select from dropdown to restore saved values</li>
+<li><strong>Delete Preset</strong> — remove a saved configuration</li>
+</ul>
+
+<p>Presets are browser-local and do not affect the server or YAML profile files.</p>
+
+<h3 id="45-analysis-results">4.5 Analysis Results</h3>
+
+<p>After clicking <strong>Run Analysis</strong>, the tool uploads the <code>.BIN</code>, processes all modules, and displays:</p>
+
+<p><strong>Score Banner</strong> — Overall score (0–100), letter grade (A–F), verdict text, and recommended action.</p>
+
+<p><strong>Report Actions</strong> — Three buttons:
+- <strong>View HTML Report</strong> — opens the generated report in a new tab
+- <strong>Download HTML Report</strong> — saves the self-contained HTML file
+- <strong>Download JSON</strong> — saves the raw machine-readable analysis data</p>
+
+<p><strong>Module Radar Chart</strong> — Spider chart showing each module's score. Modules that returned <code>available=false</code> are shown at 100 (not scored, no deduction).</p>
+
+<p><strong>Module Score Cards</strong> — One card per analysis module showing score, grade, and one-line summary.</p>
+
+<p><strong>Issue List</strong> — All detected issues with severity filter tabs (Critical / Warning / Info / All). Each issue shows:
+- Severity badge (red=Critical, orange=Warning, blue=Info)
+- Issue code (e.g. <code>BAT-002</code>)
+- Module source
+- Detailed message with observed value and threshold</p>
+
+<hr />
+
+<h2 id="5-web-ui-fleet-dashboard">5. Web UI — Fleet Dashboard</h2>
+
+<h3 id="51-overview-table">5.1 Overview Table</h3>
+
+<p>The overview table shows one row per drone (latest flight data). Columns include:</p>
+
+<ul>
+<li>Drone ID, Type, Total Flights</li>
+<li>Latest flight date and score</li>
+<li>Battery IR trend arrow</li>
+<li>Vibration level trend arrow</li>
+<li>Motor imbalance trend arrow</li>
+<li>Overall score trend arrow</li>
+<li>Maintenance alert indicator</li>
+</ul>
+
+<p>Click the arrow on any drone row to expand the <strong>Drone Detail Panel</strong>.</p>
+
+<p><strong>Search</strong> — Type in the search box to filter drones by name in real time.</p>
+
+<p><strong>Refresh</strong> — Reload fleet data from the database.</p>
+
+<p><strong>Clear All Fleet Data</strong> — Permanently delete all flight records (confirmation required).</p>
+
+<h3 id="52-drone-detail-panel">5.2 Drone Detail Panel</h3>
+
+<p>Expanding a drone shows:</p>
+
+<ul>
+<li><strong>Trend Graphs</strong> — Time-series charts for key metrics across all flights. X-axis shows actual flight dates.</li>
+<li><strong>Flight History Table</strong> — All analyzed flights with score, grade, issue counts, and duration.</li>
+<li><strong>Per-flight actions</strong> — Delete a single flight record (trash icon, confirmation required).</li>
+<li><strong>Compare checkboxes</strong> — Select two flights and click <strong>Compare</strong> for a side-by-side metric diff.</li>
+<li><strong>Export CSV</strong> — Download full flight history as a spreadsheet.</li>
+<li><strong>Delete Drone</strong> — Remove all flights for this drone (trash icon, confirmation required).</li>
+</ul>
+
+<h3 id="53-maintenance-status">5.3 Maintenance Status</h3>
+
+<p>The <strong>Maintenance</strong> sub-view shows a grid of maintenance status indicators per drone, derived from accumulated flight hours and cycle counts stored in the fleet database. Each metric shows current usage vs. the inspection interval defined in the profile.</p>
+
+<h3 id="54-compare-view">5.4 Compare View</h3>
+
+<p>Select two flights from the history table using the checkboxes, then click <strong>Compare</strong>. The compare table shows side-by-side values for all key metrics with color-coded delta indicators (green=improved, red=degraded).</p>
+
+<hr />
+
+<h2 id="6-vehicle-profiles-yaml-reference">6. Vehicle Profiles &amp; YAML Reference</h2>
+
+<h3 id="61-built-in-profiles">6.1 Built-In Profiles</h3>
+
+<p>Three ready-to-use profiles are included in the <code>profiles/</code> folder:</p>
+
+<table>
+<thead>
+<tr>
+  <th>File</th>
+  <th>Vehicle Class</th>
+  <th>Battery</th>
+  <th>Motors</th>
+  <th>Endurance</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td><code>profiles/quadcopter.yaml</code></td>
+  <td>Quadcopter</td>
+  <td>6S</td>
+  <td>4 (C1–C4)</td>
+  <td>26 min</td>
+</tr>
+<tr>
+  <td><code>profiles/quadplane.yaml</code></td>
+  <td>VTOL QuadPlane</td>
+  <td>12S</td>
+  <td>4 lift (C5–C8) + pusher C3</td>
+  <td>90 min</td>
+</tr>
+<tr>
+  <td><code>profiles/fixed_wing.yaml</code></td>
+  <td>Fixed-Wing</td>
+  <td>6S</td>
+  <td>1 (C3)</td>
+  <td>60 min</td>
+</tr>
+</tbody>
+</table>
+
+<p>Auto-detection profiles (used when no profile is specified) are in <code>profiles/defaults/</code>:
+- <code>copter_default.yaml</code>
+- <code>vtol_default.yaml</code>
+- <code>fw_default.yaml</code></p>
+
+<h3 id="62-creating-a-custom-fleet-profile">6.2 Creating a Custom Fleet Profile</h3>
+
+<div class="codehilite">
+<pre><span></span><code><span class="c1"># Start from the matching default</span>
+cp<span class="w"> </span>profiles/quadplane.yaml<span class="w"> </span>profiles/my_vtol_01.yaml
+<span class="c1"># Edit values for your specific airframe</span>
+<span class="c1"># Then use it in CLI analysis</span>
+python<span class="w"> </span>cli.py<span class="w"> </span>analyze<span class="w"> </span>flight.bin<span class="w"> </span>--profile<span class="w"> </span>profiles/my_vtol_01.yaml
+</code></pre>
+</div>
+
+<h3 id="63-full-yaml-field-reference">6.3 Full YAML Field Reference</h3>
+
+<div class="codehilite">
+<pre><span></span><code><span class="nt">id</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;my-drone-id&quot;</span><span class="w">          </span><span class="c1"># Profile identifier (string)</span>
+<span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;My</span><span class="nv"> </span><span class="s">Drone&quot;</span><span class="w">           </span><span class="c1"># Display name</span>
+<span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">vtol</span><span class="w">                 </span><span class="c1"># multirotor | fixed_wing | vtol</span>
+
+<span class="c1"># --- Operational ---</span>
+<span class="nt">expected_endurance_min</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">45</span><span class="w">  </span><span class="c1"># Planned mission endurance (minutes)</span>
+<span class="nt">expected_range_km</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">30.0</span><span class="w">     </span><span class="c1"># Planned mission range (km)</span>
+<span class="nt">max_payload_kg</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1.5</span><span class="w">         </span><span class="c1"># Payload capacity (kg)</span>
+<span class="nt">max_speed_ms</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">25.0</span><span class="w">          </span><span class="c1"># Maximum operating speed (m/s)</span>
+<span class="nt">max_altitude_m</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">150.0</span><span class="w">       </span><span class="c1"># Maximum operating altitude (m)</span>
+
+<span class="c1"># --- Battery ---</span>
+<span class="nt">battery</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">cell_count</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">6</span><span class="w">              </span><span class="c1"># LiPo series cell count (auto-detected from log)</span>
+<span class="w">  </span><span class="nt">capacity_mah</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">10000</span><span class="w">        </span><span class="c1"># Pack capacity (mAh)</span>
+<span class="w">  </span><span class="nt">nominal_voltage</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">22.2</span><span class="w">      </span><span class="c1"># Nominal pack voltage (V)</span>
+<span class="w">  </span><span class="nt">full_voltage</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">25.2</span><span class="w">         </span><span class="c1"># Full charge voltage (V)</span>
+<span class="w">  </span><span class="nt">min_cell_voltage</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">3.5</span><span class="w">      </span><span class="c1"># Per-cell warning threshold (V)</span>
+<span class="w">  </span><span class="nt">critical_cell_voltage</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">3.3</span><span class="w"> </span><span class="c1"># Per-cell critical threshold (V)</span>
+<span class="w">  </span><span class="nt">max_continuous_current_a</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">60.0</span><span class="w">  </span><span class="c1"># Rated max current (A)</span>
+<span class="w">  </span><span class="nt">cycles_lifespan</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">300</span><span class="w">       </span><span class="c1"># Expected pack cycle life</span>
+
+<span class="c1"># --- Motors (Lift) ---</span>
+<span class="nt">motors</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">count</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">4</span><span class="w">                   </span><span class="c1"># Number of lift motors (auto-detected)</span>
+<span class="w">  </span><span class="nt">channels</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">5</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">6</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">7</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">8</span><span class="p p-Indicator">]</span><span class="w">    </span><span class="c1"># RCOU channels (auto-detected)</span>
+<span class="w">  </span><span class="nt">max_pwm</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">2000</span><span class="w">              </span><span class="c1"># ESC max signal (µs)</span>
+<span class="w">  </span><span class="nt">min_pwm</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1000</span><span class="w">              </span><span class="c1"># ESC min signal (µs)</span>
+<span class="w">  </span><span class="nt">hover_throttle_pct</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">55</span><span class="w">     </span><span class="c1"># Expected hover throttle (%)</span>
+<span class="w">  </span><span class="nt">high_throttle_warn_pct</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">80</span><span class="w"> </span><span class="c1"># Warning threshold (%)</span>
+<span class="w">  </span><span class="nt">high_throttle_critical_pct</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">92</span><span class="w">  </span><span class="c1"># Critical threshold (%)</span>
+
+<span class="c1"># --- Pusher / Cruise Motor (VTOL only) ---</span>
+<span class="nt">pusher_motor</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">channel</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">3</span><span class="w">                 </span><span class="c1"># RCOU output channel</span>
+<span class="w">  </span><span class="nt">max_pwm</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">2000</span>
+<span class="w">  </span><span class="nt">min_pwm</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1000</span>
+<span class="w">  </span><span class="nt">high_throttle_warn_pct</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">80</span>
+<span class="w">  </span><span class="nt">high_throttle_critical_pct</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">92</span>
+
+<span class="c1"># --- Vibration ---</span>
+<span class="nt">vibration</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">warn_threshold</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">15.0</span><span class="w">       </span><span class="c1"># Mean vibration warning (m/s²)</span>
+<span class="w">  </span><span class="nt">critical_threshold</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">30.0</span><span class="w">   </span><span class="c1"># Mean vibration critical (m/s²)</span>
+<span class="w">  </span><span class="nt">clip_warn_per_min</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">5</span><span class="w">       </span><span class="c1"># IMU clip event rate warning</span>
+
+<span class="c1"># --- GPS / Navigation ---</span>
+<span class="nt">gps</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">min_satellites</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">8</span>
+<span class="w">  </span><span class="nt">max_hdop</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1.5</span>
+<span class="w">  </span><span class="nt">min_fix_type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">3</span><span class="w">            </span><span class="c1"># 3 = 3D Fix</span>
+<span class="w">  </span><span class="nt">max_position_jump_m</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">15.0</span>
+
+<span class="c1"># --- Maintenance Schedule ---</span>
+<span class="nt">maintenance</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">motor_hours</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">200</span>
+<span class="w">  </span><span class="nt">prop_cycles</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">150</span>
+<span class="w">  </span><span class="nt">battery_cycles</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">300</span>
+<span class="w">  </span><span class="nt">esc_hours</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">200</span>
+<span class="w">  </span><span class="nt">frame_inspection_hours</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">50</span>
+
+<span class="c1"># --- Scoring Weights (must sum to 1.0) ---</span>
+<span class="nt">scoring_weights</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">battery</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.09</span>
+<span class="w">  </span><span class="nt">motors</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.07</span>
+<span class="w">  </span><span class="nt">flight_overview</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.10</span>
+<span class="w">  </span><span class="nt">sensors</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.09</span>
+<span class="w">  </span><span class="c1"># ... (see Section 8 for full tables)</span>
+
+<span class="c1"># --- Threshold Overrides (optional, advanced) ---</span>
+<span class="c1"># thresholds:</span>
+<span class="c1">#   ctl_rms_warn_deg: 3.0</span>
+<span class="c1">#   mot_sat_warn_pct: 5.0</span>
+</code></pre>
+</div>
+
+<h3 id="64-auto-detection-behavior">6.4 Auto-Detection Behavior</h3>
+
+<p>When no profile is specified (Web UI always sends one; CLI defaults to <code>quadcopter.yaml</code>):
+- <strong>Cell count</strong> is auto-detected from log voltage at runtime and overrides the profile value
+- <strong>Motor channels</strong> are auto-detected from RCOU idle threshold analysis
+- <strong>Firmware type</strong> is auto-detected: XKF4 or TECS messages → ArduPlane; otherwise → ArduCopter</p>
+
+<hr />
+
+<h2 id="7-analysis-modules-reference">7. Analysis Modules Reference</h2>
+
+<p>Every module returns the same standard structure:</p>
+
+<div class="codehilite">
+<pre><span></span><code><span class="p">{</span>
+<span class="w">  </span><span class="nt">&quot;score&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">95.0</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;grade&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;A&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;available&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;summary&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;One-line interpretation&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;issues&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nt">&quot;severity&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;warning&quot;</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;code&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;BAT-002&quot;</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;message&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;...&quot;</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="p">],</span>
+<span class="w">  </span><span class="nt">&quot;metrics&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nt">&quot;key&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;value&quot;</span><span class="w"> </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre>
+</div>
+
+<p>When <code>available</code> is <code>false</code>, the module is excluded from scoring and its weight is redistributed to the remaining available modules.</p>
+
+<hr />
+
+<h3 id="71-flight-overview-flight_overview">7.1 Flight Overview (<code>flight_overview</code>)</h3>
+
+<p><strong>Purpose:</strong> Summarize the overall flight — duration, phases, GPS coverage, altitude range, and endurance against plan.</p>
+
+<p><strong>Required Data:</strong> GPS, MODE, ATT or BARO messages</p>
+
+<p><strong>Key Metrics:</strong>
+- Total armed duration (seconds)
+- Flight phases detected (e.g. AUTO, LOITER, GUIDED)
+- Maximum AGL altitude (m)
+- Ground track distance (km)
+- Battery remaining at landing (%)</p>
+
+<p><strong>Issue Codes:</strong></p>
+
+<table>
+<thead>
+<tr>
+  <th>Code</th>
+  <th>Severity</th>
+  <th>Meaning</th>
+  <th>Action</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td>OVR-001</td>
+  <td class="sev-info">Info</td>
+  <td>Flight summary: duration, distance, altitude</td>
+  <td>—</td>
+</tr>
+<tr>
+  <td>OVR-002</td>
+  <td class="sev-warning">Warning</td>
+  <td>Endurance significantly below expected</td>
+  <td>Review payload, battery, or profile settings</td>
+</tr>
+<tr>
+  <td>OVR-003</td>
+  <td class="sev-warning">Warning</td>
+  <td>Early landing with low battery remaining</td>
+  <td>Check endurance planning and RTL trigger</td>
+</tr>
+<tr>
+  <td>OVR-004</td>
+  <td class="sev-info">Info</td>
+  <td>Flight phases summary</td>
+  <td>—</td>
+</tr>
+</tbody>
+</table>
+
+<hr />
+
+<h3 id="72-battery-battery">7.2 Battery (<code>battery</code>)</h3>
+
+<p><strong>Purpose:</strong> Analyze voltage curve, current draw, per-cell health, internal resistance (IR), and consumption.</p>
+
+<p><strong>Required Data:</strong> BAT messages (voltage, current, remaining)</p>
+
+<p><strong>Key Metrics:</strong>
+- Starting cell voltage (V)
+- Landing cell voltage (V)
+- Minimum cell voltage during flight (V)
+- Maximum current drawn (A)
+- Energy consumed (Wh)
+- Estimated battery internal resistance (mOhm)</p>
+
+<p><strong>Issue Codes:</strong></p>
+
+<table>
+<thead>
+<tr>
+  <th>Code</th>
+  <th>Severity</th>
+  <th>Meaning</th>
+  <th>Action</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td>BAT-000</td>
+  <td class="sev-info">Info</td>
+  <td>Battery summary (voltage, current, capacity)</td>
+  <td>—</td>
+</tr>
+<tr>
+  <td>BAT-001</td>
+  <td class="sev-warning">Warning</td>
+  <td>Low starting voltage (battery not fully charged)</td>
+  <td>Charge to full before flight</td>
+</tr>
+<tr>
+  <td>BAT-002</td>
+  <td class="sev-critical">Critical</td>
+  <td>Cell voltage dropped below critical threshold during flight</td>
+  <td>Land immediately; check battery health</td>
+</tr>
+<tr>
+  <td>BAT-003</td>
+  <td class="sev-warning">Warning</td>
+  <td>Cell voltage dropped below warning threshold</td>
+  <td>Reduce flight aggressiveness or increase capacity</td>
+</tr>
+<tr>
+  <td>BAT-004</td>
+  <td class="sev-critical">Critical</td>
+  <td>Voltage drop spike (possible loose connector or cell failure)</td>
+  <td>Inspect battery and connector</td>
+</tr>
+<tr>
+  <td>BAT-005</td>
+  <td class="sev-warning">Warning</td>
+  <td>High current draw (above rated max)</td>
+  <td>Check motor load, reduce throttle demands</td>
+</tr>
+<tr>
+  <td>BAT-006</td>
+  <td class="sev-warning">Warning</td>
+  <td>Low battery remaining at landing</td>
+  <td>Review endurance planning</td>
+</tr>
+<tr>
+  <td>BAT-007</td>
+  <td class="sev-critical">Critical</td>
+  <td>Battery critically depleted (very low remaining)</td>
+  <td>Immediate battery retirement check</td>
+</tr>
+<tr>
+  <td>BAT-008</td>
+  <td class="sev-warning">Warning</td>
+  <td>High estimated internal resistance</td>
+  <td>Battery may be aging; consider replacement</td>
+</tr>
+<tr>
+  <td>BAT-009</td>
+  <td class="sev-warning">Warning</td>
+  <td>High IR variance across cells (cell imbalance)</td>
+  <td>Balance charge; inspect individual cells</td>
+</tr>
+<tr>
+  <td>BAT-010</td>
+  <td class="sev-info">Info</td>
+  <td>Multiple battery monitors detected; primary used</td>
+  <td>—</td>
+</tr>
+</tbody>
+</table>
+
+<hr />
+
+<h3 id="73-motors-motors">7.3 Motors (<code>motors</code>)</h3>
+
+<p><strong>Purpose:</strong> Analyze throttle loading, motor symmetry (for multirotors), saturation events, oscillation, and dead motor detection.</p>
+
+<p><strong>Required Data:</strong> RCOU messages (motor PWM outputs)</p>
+
+<p><strong>Key Metrics:</strong>
+- Per-motor mean and max throttle (%)
+- Motor imbalance (max deviation from mean)
+- Throttle saturation percentage
+- Pusher motor mean/max throttle (VTOL only)</p>
+
+<p><strong>Issue Codes:</strong></p>
+
+<table>
+<thead>
+<tr>
+  <th>Code</th>
+  <th>Severity</th>
+  <th>Meaning</th>
+  <th>Action</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td>MOT-000</td>
+  <td class="sev-info">Info</td>
+  <td>Motor summary</td>
+  <td>—</td>
+</tr>
+<tr>
+  <td>MOT-001</td>
+  <td class="sev-warning">Warning</td>
+  <td>High motor symmetry imbalance</td>
+  <td>Check propellers and motor balance</td>
+</tr>
+<tr>
+  <td>MOT-002</td>
+  <td class="sev-critical">Critical</td>
+  <td>Very high motor imbalance (possible dead motor or broken prop)</td>
+  <td>Inspect all motors and propellers before flight</td>
+</tr>
+<tr>
+  <td>MOT-003</td>
+  <td class="sev-warning">Warning</td>
+  <td>Sustained high throttle (above warn threshold)</td>
+  <td>Check payload weight; motor/battery sizing</td>
+</tr>
+<tr>
+  <td>MOT-004</td>
+  <td class="sev-critical">Critical</td>
+  <td>Sustained critical throttle (near saturation)</td>
+  <td>Ground aircraft; review power system</td>
+</tr>
+<tr>
+  <td>MOT-005</td>
+  <td class="sev-warning">Warning</td>
+  <td>Motor throttle saturation events detected</td>
+  <td>Reduce aggressiveness; check airframe balance</td>
+</tr>
+<tr>
+  <td>MOT-006</td>
+  <td class="sev-warning">Warning</td>
+  <td>High fixed-wing throttle (above warn)</td>
+  <td>Review propulsion sizing or headwind condition</td>
+</tr>
+<tr>
+  <td>MOT-007</td>
+  <td class="sev-info">Info</td>
+  <td>Motor channel summary</td>
+  <td>—</td>
+</tr>
+<tr>
+  <td>MOT-008</td>
+  <td class="sev-critical">Critical</td>
+  <td>Fixed-wing critical throttle (possible engine struggling)</td>
+  <td>Inspect motor and propeller</td>
+</tr>
+<tr>
+  <td>MOT-009</td>
+  <td class="sev-critical">Critical</td>
+  <td>Possible dead motor detected (near-zero output)</td>
+  <td>Inspect motor and ESC before next flight</td>
+</tr>
+<tr>
+  <td>MOT-010</td>
+  <td class="sev-warning">Warning</td>
+  <td>Pusher/cruise motor high throttle (above warn)</td>
+  <td>Review cruise speed and propulsion sizing</td>
+</tr>
+<tr>
+  <td>MOT-011</td>
+  <td class="sev-critical">Critical</td>
+  <td>Pusher/cruise motor saturation (near max output)</td>
+  <td>Inspect pusher motor and reduce cruise demands</td>
+</tr>
+</tbody>
+</table>
+
+<hr />
+
+<h3 id="74-vibration-vibration">7.4 Vibration (<code>vibration</code>)</h3>
+
+<p><strong>Purpose:</strong> Analyze IMU vibration levels, clipping events, and vibration trends that indicate prop damage, motor bearing failure, or mounting issues.</p>
+
+<p><strong>Required Data:</strong> VIBE messages, optionally IMU messages for FFT</p>
+
+<p><strong>Key Metrics:</strong>
+- Mean vibration per axis (m/s²)
+- Peak vibration (m/s²)
+- IMU clipping events per minute
+- Vibration trend (rising/stable/falling)</p>
+
+<p><strong>Issue Codes:</strong></p>
+
+<table>
+<thead>
+<tr>
+  <th>Code</th>
+  <th>Severity</th>
+  <th>Meaning</th>
+  <th>Action</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td>VIB-000</td>
+  <td class="sev-info">Info</td>
+  <td>Vibration summary</td>
+  <td>—</td>
+</tr>
+<tr>
+  <td>VIB-001</td>
+  <td class="sev-warning">Warning</td>
+  <td>Vibration level above warning threshold</td>
+  <td>Check propeller balance and motor mounts</td>
+</tr>
+<tr>
+  <td>VIB-002</td>
+  <td class="sev-critical">Critical</td>
+  <td>Vibration level above critical threshold</td>
+  <td>Ground aircraft; inspect propellers and motors</td>
+</tr>
+<tr>
+  <td>VIB-003</td>
+  <td class="sev-warning">Warning</td>
+  <td>IMU clipping events detected</td>
+  <td>Reduce vibration; check mounting foam</td>
+</tr>
+<tr>
+  <td>VIB-004</td>
+  <td class="sev-warning">Warning</td>
+  <td>IMU clipping rate above warning threshold</td>
+  <td>Investigate vibration source</td>
+</tr>
+<tr>
+  <td>VIB-005</td>
+  <td class="sev-warning">Warning</td>
+  <td>Rising vibration trend across flight</td>
+  <td>Monitor for progressive prop/bearing damage</td>
+</tr>
+<tr>
+  <td>VIB-006</td>
+  <td class="sev-info">Info</td>
+  <td>FFT analysis summary</td>
+  <td>—</td>
+</tr>
+</tbody>
+</table>
+
+<hr />
+
+<h3 id="75-sensors-sensors">7.5 Sensors (<code>sensors</code>)</h3>
+
+<p><strong>Purpose:</strong> Evaluate GPS fix quality, EKF health, IMU consistency, magnetometer noise, and barometer stability.</p>
+
+<p><strong>Required Data:</strong> GPS, XKF4, IMU, MAG, BARO messages</p>
+
+<p><strong>Issue Codes:</strong></p>
+
+<table>
+<thead>
+<tr>
+  <th>Code</th>
+  <th>Severity</th>
+  <th>Meaning</th>
+  <th>Action</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td>SEN-001</td>
+  <td class="sev-info">Info</td>
+  <td>GPS summary</td>
+  <td>—</td>
+</tr>
+<tr>
+  <td>SEN-002</td>
+  <td class="sev-warning">Warning</td>
+  <td>Low satellite count</td>
+  <td>Improve sky view; check antenna placement</td>
+</tr>
+<tr>
+  <td>SEN-003</td>
+  <td class="sev-critical">Critical</td>
+  <td>GPS fix lost or insufficient fix type</td>
+  <td>Do not fly autonomously until fix restored</td>
+</tr>
+<tr>
+  <td>SEN-010</td>
+  <td class="sev-info">Info</td>
+  <td>EKF summary</td>
+  <td>—</td>
+</tr>
+<tr>
+  <td>SEN-011</td>
+  <td class="sev-warning">Warning</td>
+  <td>EKF velocity variance elevated</td>
+  <td>Check GPS and IMU</td>
+</tr>
+<tr>
+  <td>SEN-012</td>
+  <td class="sev-critical">Critical</td>
+  <td>EKF health critical</td>
+  <td>Do not fly; investigate sensor fusion</td>
+</tr>
+<tr>
+  <td>SEN-013</td>
+  <td class="sev-warning">Warning</td>
+  <td>High HDOP</td>
+  <td>Check GPS antenna; move away from obstructions</td>
+</tr>
+<tr>
+  <td>SEN-014</td>
+  <td class="sev-warning">Warning</td>
+  <td>GPS position jump detected</td>
+  <td>Check for RF interference</td>
+</tr>
+<tr>
+  <td>SEN-020</td>
+  <td class="sev-info">Info</td>
+  <td>IMU summary</td>
+  <td>—</td>
+</tr>
+<tr>
+  <td>SEN-021</td>
+  <td class="sev-warning">Warning</td>
+  <td>IMU temperature variance elevated</td>
+  <td>Check IMU heating/cooling</td>
+</tr>
+<tr>
+  <td>SEN-022</td>
+  <td class="sev-warning">Warning</td>
+  <td>Multiple IMU disagreement</td>
+  <td>Check IMU isolation and calibration</td>
+</tr>
+<tr>
+  <td>SEN-030</td>
+  <td class="sev-info">Info</td>
+  <td>Magnetometer summary</td>
+  <td>—</td>
+</tr>
+<tr>
+  <td>SEN-031</td>
+  <td class="sev-warning">Warning</td>
+  <td>Magnetic field strength deviation</td>
+  <td>Recalibrate compass; check for interference</td>
+</tr>
+<tr>
+  <td>SEN-032</td>
+  <td class="sev-warning">Warning</td>
+  <td>Magnetometer inconsistency</td>
+  <td>Inspect for metallic interference sources</td>
+</tr>
+<tr>
+  <td>SEN-040</td>
+  <td class="sev-info">Info</td>
+  <td>Barometer summary</td>
+  <td>—</td>
+</tr>
+<tr>
+  <td>SEN-041</td>
+  <td class="sev-warning">Warning</td>
+  <td>Barometer noise elevated</td>
+  <td>Check for airflow around barometer</td>
+</tr>
+<tr>
+  <td>SEN-050</td>
+  <td class="sev-info">Info</td>
+  <td>Sensor health summary</td>
+  <td>—</td>
+</tr>
+<tr>
+  <td>SEN-051</td>
+  <td class="sev-warning">Warning</td>
+  <td>Multiple sensor warnings detected</td>
+  <td>Investigate sensor suite</td>
+</tr>
+</tbody>
+</table>
+
+<hr />
+
+<h3 id="76-control-control">7.6 Control (<code>control</code>)</h3>
+
+<p><strong>Purpose:</strong> Measure how accurately the autopilot tracked desired attitude (roll, pitch, yaw), detect PID oscillation, and identify large attitude errors.</p>
+
+<p><strong>Required Data:</strong> ATT messages (desired vs actual roll/pitch/yaw)</p>
+
+<p><strong>Key Metrics:</strong>
+- Roll/Pitch RMS tracking error (degrees)
+- Yaw tracking error (degrees)
+- Percentage of flight with large attitude errors
+- Oscillation frequency and amplitude</p>
+
+<p><strong>Issue Codes:</strong></p>
+
+<table>
+<thead>
+<tr>
+  <th>Code</th>
+  <th>Severity</th>
+  <th>Meaning</th>
+  <th>Action</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td>CTL-001</td>
+  <td class="sev-warning">Warning</td>
+  <td>Roll/Pitch RMS tracking error above warning</td>
+  <td>Review PID tune; check for mechanical play</td>
+</tr>
+<tr>
+  <td>CTL-002</td>
+  <td class="sev-critical">Critical</td>
+  <td>Roll/Pitch RMS tracking error critical</td>
+  <td>Ground aircraft; retune PID or inspect servos</td>
+</tr>
+<tr>
+  <td>CTL-003</td>
+  <td class="sev-warning">Warning</td>
+  <td>Large attitude errors detected (&gt; threshold % of flight)</td>
+  <td>Check airframe integrity and PID stability</td>
+</tr>
+<tr>
+  <td>CTL-004</td>
+  <td class="sev-warning">Warning</td>
+  <td>Yaw tracking deviation elevated</td>
+  <td>Check compass calibration and yaw PID</td>
+</tr>
+<tr>
+  <td>CTL-005</td>
+  <td class="sev-warning">Warning</td>
+  <td>Oscillation detected in attitude control</td>
+  <td>Reduce P-gain; check for resonance frequencies</td>
+</tr>
+</tbody>
+</table>
+
+<hr />
+
+<h3 id="77-efficiency-efficiency">7.7 Efficiency (<code>efficiency</code>)</h3>
+
+<p><strong>Purpose:</strong> Compute energy efficiency (Wh/km), average power consumption, and compare against profile baseline.</p>
+
+<p><strong>Required Data:</strong> BAT messages + GPS messages</p>
+
+<p><strong>Key Metrics:</strong>
+- Energy consumed (Wh)
+- Total distance (km)
+- Efficiency (Wh/km)
+- Average power (W)
+- Deviation from expected efficiency</p>
+
+<p><strong>Issue Codes:</strong></p>
+
+<table>
+<thead>
+<tr>
+  <th>Code</th>
+  <th>Severity</th>
+  <th>Meaning</th>
+  <th>Action</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td>EFF-001</td>
+  <td class="sev-warning">Warning</td>
+  <td>Efficiency significantly below expected</td>
+  <td>Check payload weight, wind conditions, PID tune</td>
+</tr>
+<tr>
+  <td>EFF-002</td>
+  <td class="sev-info">Info</td>
+  <td>Efficiency summary</td>
+  <td>—</td>
+</tr>
+<tr>
+  <td>EFF-003</td>
+  <td class="sev-warning">Warning</td>
+  <td>High average power consumption</td>
+  <td>Review propulsion sizing and flight profile</td>
+</tr>
+</tbody>
+</table>
+
+<hr />
+
+<h3 id="78-rc-link-rc_link">7.8 RC Link (<code>rc_link</code>)</h3>
+
+<p><strong>Purpose:</strong> Detect RC signal dropouts, failsafe activations, and RSSI quality degradation.</p>
+
+<p><strong>Required Data:</strong> RCIN, RSSI, ERR messages</p>
+
+<p><strong>Issue Codes:</strong></p>
+
+<table>
+<thead>
+<tr>
+  <th>Code</th>
+  <th>Severity</th>
+  <th>Meaning</th>
+  <th>Action</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td>RCL-001</td>
+  <td class="sev-warning">Warning</td>
+  <td>RC signal dropout detected</td>
+  <td>Check transmitter battery; reduce interference</td>
+</tr>
+<tr>
+  <td>RCL-002</td>
+  <td class="sev-critical">Critical</td>
+  <td>RC failsafe activated during flight</td>
+  <td>Investigate RC range and antenna orientation</td>
+</tr>
+<tr>
+  <td>RCL-003</td>
+  <td class="sev-warning">Warning</td>
+  <td>Low RC signal RSSI</td>
+  <td>Move closer; check antenna; reduce obstacles</td>
+</tr>
+<tr>
+  <td>RCL-005</td>
+  <td class="sev-info">Info</td>
+  <td>RC link summary</td>
+  <td>—</td>
+</tr>
+</tbody>
+</table>
+
+<p><strong>Note:</strong> RC link module may return <code>available=false</code> for fully autonomous missions where RC inputs are not logged.</p>
+
+<hr />
+
+<h3 id="79-landing-wind-landing_wind">7.9 Landing &amp; Wind (<code>landing_wind</code>)</h3>
+
+<p><strong>Purpose:</strong> Assess landing quality (bounce, hard landing, lateral drift) and estimate wind from GPS/attitude data.</p>
+
+<p><strong>Required Data:</strong> GPS, ATT, BARO messages near landing</p>
+
+<p><strong>Issue Codes:</strong></p>
+
+<table>
+<thead>
+<tr>
+  <th>Code</th>
+  <th>Severity</th>
+  <th>Meaning</th>
+  <th>Action</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td>LND-001</td>
+  <td class="sev-info">Info</td>
+  <td>Landing summary</td>
+  <td>—</td>
+</tr>
+<tr>
+  <td>LND-002</td>
+  <td class="sev-warning">Warning</td>
+  <td>Hard landing detected (rapid descent at touchdown)</td>
+  <td>Adjust landing approach; check landing gear</td>
+</tr>
+<tr>
+  <td>LND-003</td>
+  <td class="sev-warning">Warning</td>
+  <td>Bounce detected at landing</td>
+  <td>Tune landing PID; reduce descent rate</td>
+</tr>
+<tr>
+  <td>LND-004</td>
+  <td class="sev-warning">Warning</td>
+  <td>High lateral drift at landing</td>
+  <td>Check crosswind limits; improve approach angle</td>
+</tr>
+<tr>
+  <td>LND-005</td>
+  <td class="sev-warning">Warning</td>
+  <td>High estimated wind speed during landing</td>
+  <td>Verify wind limits for operation</td>
+</tr>
+<tr>
+  <td>WND-001</td>
+  <td class="sev-info">Info</td>
+  <td>Wind estimate summary</td>
+  <td>—</td>
+</tr>
+<tr>
+  <td>WND-002</td>
+  <td class="sev-warning">Warning</td>
+  <td>Estimated wind above operational limit</td>
+  <td>Review mission go/no-go criteria</td>
+</tr>
+<tr>
+  <td>WND-003</td>
+  <td class="sev-info">Info</td>
+  <td>Wind direction noted</td>
+  <td>—</td>
+</tr>
+</tbody>
+</table>
+
+<hr />
+
+<h3 id="710-flight-controller-health-fc_health">7.10 Flight Controller Health (<code>fc_health</code>)</h3>
+
+<p><strong>Purpose:</strong> Monitor flight controller power rails (VCC, servo bus), detect brownouts, and flag ArduPilot error events.</p>
+
+<p><strong>Required Data:</strong> POWR, ERR messages</p>
+
+<p><strong>Key Metrics:</strong>
+- VCC rail mean and min (V)
+- Servo rail mean (V)
+- Brownout events (VCC change &gt; 200 mV)
+- Firmware error events (ERR messages)</p>
+
+<p><strong>Issue Codes:</strong></p>
+
+<table>
+<thead>
+<tr>
+  <th>Code</th>
+  <th>Severity</th>
+  <th>Meaning</th>
+  <th>Action</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td>FCH-001</td>
+  <td class="sev-info">Info</td>
+  <td>FC power summary</td>
+  <td>—</td>
+</tr>
+<tr>
+  <td>FCH-002</td>
+  <td class="sev-warning">Warning</td>
+  <td>VCC rail voltage low</td>
+  <td>Check FC power supply and cable connections</td>
+</tr>
+<tr>
+  <td>FCH-003</td>
+  <td class="sev-critical">Critical</td>
+  <td>VCC brownout detected (VCC dropped &gt; 200 mV in flight)</td>
+  <td>Inspect power distribution; replace BEC if necessary</td>
+</tr>
+<tr>
+  <td>FCH-004</td>
+  <td class="sev-warning">Warning</td>
+  <td>Servo rail voltage anomaly</td>
+  <td>Check servo BEC</td>
+</tr>
+<tr>
+  <td>FCH-005</td>
+  <td class="sev-warning">Warning</td>
+  <td>ArduPilot error event logged</td>
+  <td>Review ERR log for subsystem and error code</td>
+</tr>
+<tr>
+  <td>FCH-006</td>
+  <td class="sev-critical">Critical</td>
+  <td>Multiple ArduPilot errors detected</td>
+  <td>Investigate firmware and hardware</td>
+</tr>
+<tr>
+  <td>FCH-007</td>
+  <td class="sev-info">Info</td>
+  <td>No brownout events detected</td>
+  <td>—</td>
+</tr>
+<tr>
+  <td>FCH-008</td>
+  <td class="sev-warning">Warning</td>
+  <td>Pre-arm power event noted</td>
+  <td>Check power system before arming</td>
+</tr>
+</tbody>
+</table>
+
+<hr />
+
+<h3 id="711-vtol-transition-vtol_transition">7.11 VTOL Transition (<code>vtol_transition</code>)</h3>
+
+<p><strong>Purpose:</strong> Evaluate the quality of transitions between hover (Q-mode) and fixed-wing cruise, and back.</p>
+
+<p><strong>Required Data:</strong> MODE, ATT, GPS, BARO messages (VTOL logs only)</p>
+
+<p><strong>Availability:</strong> Returns <code>available=false</code> for non-VTOL vehicle types.</p>
+
+<p><strong>Key Metrics:</strong>
+- Forward transition duration (s)
+- Altitude loss/gain during transition (m)
+- Attitude spike during transition (degrees)
+- Back transition quality</p>
+
+<p><strong>Issue Codes:</strong></p>
+
+<table>
+<thead>
+<tr>
+  <th>Code</th>
+  <th>Severity</th>
+  <th>Meaning</th>
+  <th>Action</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td>VTR-001</td>
+  <td class="sev-info">Info</td>
+  <td>VTOL transition summary</td>
+  <td>—</td>
+</tr>
+<tr>
+  <td>VTR-002</td>
+  <td class="sev-warning">Warning</td>
+  <td>Altitude loss during forward transition</td>
+  <td>Review ARSPD<em>FBW</em>MIN and transition speed</td>
+</tr>
+<tr>
+  <td>VTR-003</td>
+  <td class="sev-critical">Critical</td>
+  <td>Critical altitude loss during transition</td>
+  <td>Adjust transition parameters; verify airspeed sensor</td>
+</tr>
+<tr>
+  <td>VTR-004</td>
+  <td class="sev-warning">Warning</td>
+  <td>Large attitude spike during transition</td>
+  <td>Tune transition Q<em>TILT or Q</em>TRANS_DECEL</td>
+</tr>
+<tr>
+  <td>VTR-005</td>
+  <td class="sev-warning">Warning</td>
+  <td>Slow forward transition</td>
+  <td>Check transition speed and motor tilt rate</td>
+</tr>
+<tr>
+  <td>VTR-006</td>
+  <td class="sev-warning">Warning</td>
+  <td>Back transition anomaly</td>
+  <td>Review Q_ASSIST and back-transition parameters</td>
+</tr>
+<tr>
+  <td>VTR-007</td>
+  <td class="sev-info">Info</td>
+  <td>Transition event details</td>
+  <td>—</td>
+</tr>
+</tbody>
+</table>
+
+<hr />
+
+<h3 id="712-mission-execution-mission">7.12 Mission Execution (<code>mission</code>)</h3>
+
+<p><strong>Purpose:</strong> Verify mission waypoint completion, measure cross-track error (deviation from planned path), and detect missed waypoints.</p>
+
+<p><strong>Required Data:</strong> CMD, GPS, MODE messages</p>
+
+<p><strong>Availability:</strong> Returns <code>available=false</code> when no CMD data, no AUTO mode segments, or fewer than 2 nav waypoints are detected.</p>
+
+<p><strong>Key Metrics:</strong>
+- Total waypoints planned vs executed
+- Waypoints missed
+- Mean cross-track error (m)
+- Max cross-track error (m)
+- Per-leg statistics</p>
+
+<p><strong>Issue Codes:</strong></p>
+
+<table>
+<thead>
+<tr>
+  <th>Code</th>
+  <th>Severity</th>
+  <th>Meaning</th>
+  <th>Action</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td>MSN-000</td>
+  <td class="sev-info">Info</td>
+  <td>Mission summary</td>
+  <td>—</td>
+</tr>
+<tr>
+  <td>MSN-001</td>
+  <td class="sev-warning">Warning</td>
+  <td>Waypoints missed or not executed</td>
+  <td>Check CMD upload; verify AUTO mode triggers</td>
+</tr>
+<tr>
+  <td>MSN-002</td>
+  <td class="sev-critical">Critical</td>
+  <td>Multiple waypoints not executed</td>
+  <td>Investigate GPS, RC failsafe, or GCS connection</td>
+</tr>
+<tr>
+  <td>MSN-003</td>
+  <td class="sev-warning">Warning</td>
+  <td>Cross-track error above warning threshold</td>
+  <td>Tune L1 navigation controller</td>
+</tr>
+<tr>
+  <td>MSN-004</td>
+  <td class="sev-critical">Critical</td>
+  <td>Cross-track error critically high</td>
+  <td>Inspect navigation system; check GPS and wind</td>
+</tr>
+<tr>
+  <td>MSN-005</td>
+  <td class="sev-info">Info</td>
+  <td>Per-leg cross-track summary</td>
+  <td>—</td>
+</tr>
+</tbody>
+</table>
+
+<hr />
+
+<h3 id="713-airspeed-health-airspeed">7.13 Airspeed Health (<code>airspeed</code>)</h3>
+
+<p><strong>Purpose:</strong> Analyze stall risk and overspeed events using either a dedicated ARSP sensor or GPS groundspeed as a proxy.</p>
+
+<p><strong>Required Data:</strong> ARSP messages (preferred) or GPS messages</p>
+
+<p><strong>Availability:</strong> Returns <code>available=false</code> for multirotor (no airspeed envelope). Available for fixed-wing and VTOL cruise segments only.</p>
+
+<p><strong>Data Sources (in priority order):</strong>
+1. <strong>ARSP sensor</strong> — used if present in log (requires <code>LOG_BITMASK</code> bit for airspeed logging)
+2. <strong>GPS groundspeed</strong> — proxy fallback when no ARSP data</p>
+
+<p>Speed thresholds derived from profile:
+- Stall proxy = <code>max_speed_ms × 0.40</code> (40% of cruise speed)
+- Overspeed threshold = <code>max_speed_ms × 1.25</code> (125% of cruise speed)</p>
+
+<p><strong>Issue Codes:</strong></p>
+
+<table>
+<thead>
+<tr>
+  <th>Code</th>
+  <th>Severity</th>
+  <th>Meaning</th>
+  <th>Action</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td>ASP-001</td>
+  <td class="sev-info">Info</td>
+  <td>Airspeed source summary (ARSP sensor or GPS proxy)</td>
+  <td>—</td>
+</tr>
+<tr>
+  <td>ASP-002</td>
+  <td>Critical/Warning</td>
+  <td>Stall risk: &gt; 5% of cruise time below minimum airspeed proxy</td>
+  <td>Check ARSPD<em>FBW</em>MIN; review approach speeds</td>
+</tr>
+<tr>
+  <td>ASP-003</td>
+  <td class="sev-warning">Warning</td>
+  <td>Overspeed: &gt; 2% of cruise time above maximum airspeed</td>
+  <td>Check ARSPD<em>FBW</em>MAX; review dive speeds</td>
+</tr>
+<tr>
+  <td>ASP-004</td>
+  <td class="sev-warning">Warning</td>
+  <td>High airspeed variability (turbulence or throttle hunting)</td>
+  <td>Review TECS<em>THR</em>DAMP or L1 controller settings</td>
+</tr>
+</tbody>
+</table>
+
+<p><strong>Note on ASP-002 gusty conditions:</strong> When GPS groundspeed variability is very high (std/mean &gt; 0.50), indicating significant wind, ASP-002 is downgraded from Critical to Warning with reduced score penalty. Install a dedicated airspeed sensor for accurate stall protection.</p>
+
+<hr />
+
+<h3 id="714-pid-tuning-assessment-pid_tuning">7.14 PID Tuning Assessment (<code>pid_tuning</code>)</h3>
+
+<p><strong>Purpose:</strong> Evaluate PID controller health — I-term saturation, D-term noise, and rate tracking error.</p>
+
+<p><strong>Required Data:</strong> PIDR, PIDP messages</p>
+
+<p><strong>Availability:</strong> Returns <code>available=false</code> when PIDR/PIDP messages are absent. Enable by setting <code>LOG_BITMASK</code> bit 6 in ArduPilot parameters.</p>
+
+<p><strong>Issue Codes:</strong></p>
+
+<table>
+<thead>
+<tr>
+  <th>Code</th>
+  <th>Severity</th>
+  <th>Meaning</th>
+  <th>Action</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td>PID-001</td>
+  <td class="sev-info">Info</td>
+  <td>PID summary</td>
+  <td>—</td>
+</tr>
+<tr>
+  <td>PID-002</td>
+  <td class="sev-warning">Warning</td>
+  <td>High I-term saturation</td>
+  <td>Reduce I-gain; check for mechanical binding</td>
+</tr>
+<tr>
+  <td>PID-003</td>
+  <td class="sev-warning">Warning</td>
+  <td>High D-term noise</td>
+  <td>Check vibration; reduce D-gain or add D-filter</td>
+</tr>
+<tr>
+  <td>PID-004</td>
+  <td class="sev-warning">Warning</td>
+  <td>Poor rate tracking (high rate error RMS)</td>
+  <td>Retune P-gain for rate loop</td>
+</tr>
+<tr>
+  <td>PID-005</td>
+  <td class="sev-info">Info</td>
+  <td>PID quality good</td>
+  <td>—</td>
+</tr>
+</tbody>
+</table>
+
+<hr />
+
+<h3 id="715-power-rail-health-power_rail">7.15 Power Rail Health (<code>power_rail</code>)</h3>
+
+<p><strong>Purpose:</strong> Monitor main power bus stability, detect brownout events, measure voltage sag under load, and assess bus noise.</p>
+
+<p><strong>Required Data:</strong> BAT messages (voltage vs current), POWR messages</p>
+
+<p><strong>Availability:</strong> Returns <code>available=false</code> when BAT messages are absent or fewer than 10 armed samples exist.</p>
+
+<p><strong>Issue Codes:</strong></p>
+
+<table>
+<thead>
+<tr>
+  <th>Code</th>
+  <th>Severity</th>
+  <th>Meaning</th>
+  <th>Action</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td>PWR-001</td>
+  <td class="sev-critical">Critical</td>
+  <td>Brownout detected: VCC changed by &gt; 200 mV in flight</td>
+  <td>Inspect power distribution and BEC</td>
+</tr>
+<tr>
+  <td>PWR-002</td>
+  <td class="sev-warning">Warning</td>
+  <td>Peak voltage sag during high-current events</td>
+  <td>Increase battery C-rating or reduce load</td>
+</tr>
+<tr>
+  <td>PWR-003</td>
+  <td class="sev-warning">Warning</td>
+  <td>Sustained voltage sag under load</td>
+  <td>Inspect wiring resistance; upgrade to lower-ESR battery</td>
+</tr>
+<tr>
+  <td>PWR-004</td>
+  <td class="sev-warning">Warning</td>
+  <td>High bus voltage noise (CV &gt; threshold)</td>
+  <td>Check capacitor; inspect ESC and wiring</td>
+</tr>
+</tbody>
+</table>
+
+<hr />
+
+<h3 id="716-telemetry-link-quality-telemetry">7.16 Telemetry Link Quality (<code>telemetry</code>)</h3>
+
+<p><strong>Purpose:</strong> Assess ground-to-air telemetry radio quality: RSSI, SNR, packet errors, and TxBuf congestion.</p>
+
+<p><strong>Required Data:</strong> RADIO messages (SiK / RFD900 radio)</p>
+
+<p><strong>Availability:</strong> Returns <code>available=false</code> when RADIO messages are absent. Expected when no telemetry radio is connected or radio statistics logging is not enabled.</p>
+
+<p><strong>Issue Codes:</strong></p>
+
+<table>
+<thead>
+<tr>
+  <th>Code</th>
+  <th>Severity</th>
+  <th>Meaning</th>
+  <th>Action</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td>TLM-001</td>
+  <td class="sev-info">Info</td>
+  <td>Telemetry link summary</td>
+  <td>—</td>
+</tr>
+<tr>
+  <td>TLM-002</td>
+  <td class="sev-warning">Warning</td>
+  <td>RSSI below acceptable level</td>
+  <td>Reduce range; improve antenna orientation</td>
+</tr>
+<tr>
+  <td>TLM-003</td>
+  <td class="sev-warning">Warning</td>
+  <td>Low SNR (signal-to-noise ratio)</td>
+  <td>Check for RF interference; change frequency</td>
+</tr>
+<tr>
+  <td>TLM-004</td>
+  <td class="sev-warning">Warning</td>
+  <td>TxBuf congestion (bandwidth saturation)</td>
+  <td>Reduce telemetry stream rates in GCS</td>
+</tr>
+<tr>
+  <td>TLM-005</td>
+  <td class="sev-warning">Warning</td>
+  <td>High RxErrors rate</td>
+  <td>Check cable and radio hardware</td>
+</tr>
+</tbody>
+</table>
+
+<hr />
+
+<h3 id="717-esc-telemetry-health-esc_telemetry">7.17 ESC Telemetry Health (<code>esc_telemetry</code>)</h3>
+
+<p><strong>Purpose:</strong> Monitor per-motor ESC board temperature, motor winding temperature, current imbalance, RPM imbalance, and ESC error counts.</p>
+
+<p><strong>Required Data:</strong> ESC messages (BLHeli32 / AM32 passthrough telemetry)</p>
+
+<p><strong>Availability:</strong> Returns <code>available=false</code> when ESC messages are absent. Enable by configuring BLHeli32 or AM32 ESC telemetry passthrough in ArduPilot parameters.</p>
+
+<p><strong>Thresholds:</strong>
+- ESC board temp: warn 60°C, critical 80°C
+- Motor winding temp: warn 70°C, critical 100°C
+- Current imbalance: warn 20%, critical 40%
+- RPM imbalance: warn 15%, critical 30%</p>
+
+<p><strong>Issue Codes:</strong></p>
+
+<table>
+<thead>
+<tr>
+  <th>Code</th>
+  <th>Severity</th>
+  <th>Meaning</th>
+  <th>Action</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td>ESC-001</td>
+  <td>Warning/Critical</td>
+  <td>ESC board temperature high</td>
+  <td>Improve ESC cooling; check airflow</td>
+</tr>
+<tr>
+  <td>ESC-002</td>
+  <td>Warning/Critical</td>
+  <td>Motor winding temperature high</td>
+  <td>Check motor load and cooling</td>
+</tr>
+<tr>
+  <td>ESC-003</td>
+  <td>Warning/Critical</td>
+  <td>ESC current imbalance between motors</td>
+  <td>Check propellers; inspect for motor drag</td>
+</tr>
+<tr>
+  <td>ESC-004</td>
+  <td>Warning/Critical</td>
+  <td>ESC RPM imbalance between motors</td>
+  <td>Inspect for partial motor failure or prop damage</td>
+</tr>
+</tbody>
+</table>
+
+<hr />
+
+<h3 id="718-altitude-control-altitude_control">7.18 Altitude Control (<code>altitude_control</code>)</h3>
+
+<p><strong>Purpose:</strong> Measure altitude tracking accuracy (commanded vs actual), climb-rate tracking, and altitude hold stability during loiter.</p>
+
+<p><strong>Required Data:</strong> CTUN messages (ArduCopter), NTUN messages (ArduPlane/VTOL)</p>
+
+<p><strong>Key Metrics:</strong>
+- Altitude tracking RMS error (m)
+- Peak altitude deviation (m)
+- Climb-rate RMS error (m/s)
+- Altitude hold standard deviation during loiter/alt-hold</p>
+
+<p><strong>Issue Codes:</strong></p>
+
+<table>
+<thead>
+<tr>
+  <th>Code</th>
+  <th>Severity</th>
+  <th>Meaning</th>
+  <th>Action</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td>CTN-001</td>
+  <td class="sev-warning">Warning</td>
+  <td>Altitude tracking RMS above warning</td>
+  <td>Tune TECS or altitude PID</td>
+</tr>
+<tr>
+  <td>CTN-002</td>
+  <td class="sev-critical">Critical</td>
+  <td>Altitude tracking RMS above critical</td>
+  <td>Inspect altitude sensor; tune controller</td>
+</tr>
+<tr>
+  <td>CTN-003</td>
+  <td>Warning/Critical</td>
+  <td>Peak altitude deviation too large</td>
+  <td>Check for disturbances; verify alt sensor</td>
+</tr>
+<tr>
+  <td>CTN-004</td>
+  <td class="sev-warning">Warning</td>
+  <td>Poor altitude hold stability during loiter</td>
+  <td>Tune TECS<em>HDEM</em>TCONST or altitude controller</td>
+</tr>
+</tbody>
+</table>
+
+<p><strong>Per-segment settling:</strong> The first 30 s (multirotor) or 30–60 s (fixed-wing/VTOL) of each AUTO segment is excluded from analysis to avoid penalizing normal controller convergence on mode entry.</p>
+
+<hr />
+
+<h3 id="719-firmware-error-events-fc_health-err-subsystem">7.19 Firmware Error Events (<code>fc_health</code> — ERR subsystem)</h3>
+
+<p>ArduPilot logs <code>ERR</code> messages for firmware-level fault events. These appear as:</p>
+
+<pre><code>ERR-XX  (where XX = subsystem ID)
+</code></pre>
+
+<p>Common subsystems:
+- ERR-02: Compass
+- ERR-03: Optical Flow
+- ERR-04: Failsafe (throttle)
+- ERR-05: Failsafe (battery)
+- ERR-06: Failsafe (GPS)
+- ERR-08: Parachute
+- ERR-09: EKF Primary Changed</p>
+
+<p>ERR messages are included in <code>fc_health</code> issues with code <code>ERR-{subsystem_id:02d}</code>.</p>
+
+<hr />
+
+<h2 id="8-scoring-grading-system">8. Scoring &amp; Grading System</h2>
+
+<h3 id="81-grade-bands">8.1 Grade Bands</h3>
+
+<table>
+<thead>
+<tr>
+  <th>Score</th>
+  <th>Grade</th>
+  <th>Verdict</th>
+  <th>Recommended Action</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td>90–100</td>
+  <td>A</td>
+  <td>EXCELLENT</td>
+  <td>Ready for next mission</td>
+</tr>
+<tr>
+  <td>75–89</td>
+  <td>B</td>
+  <td>GOOD</td>
+  <td>Monitor; schedule routine check</td>
+</tr>
+<tr>
+  <td>60–74</td>
+  <td>C</td>
+  <td>FAIR</td>
+  <td>Investigate warnings before next flight</td>
+</tr>
+<tr>
+  <td>40–59</td>
+  <td>D</td>
+  <td>POOR</td>
+  <td>Schedule maintenance; do not fly without inspection</td>
+</tr>
+<tr>
+  <td>0–39</td>
+  <td>F</td>
+  <td>CRITICAL</td>
+  <td>Ground aircraft; immediate maintenance required</td>
+</tr>
+</tbody>
+</table>
+
+<h3 id="82-weighted-score-calculation">8.2 Weighted Score Calculation</h3>
+
+<pre><code>weighted_score = sum(module_score[i] × weight[i] for available modules)
+               / sum(weight[i] for available modules)
+</code></pre>
+
+<p>When a module returns <code>available=false</code>, its weight is removed and the remaining weights are renormalized to sum to 1.0. Modules that return <code>available=false</code> do NOT reduce the score.</p>
+
+<h3 id="83-scoring-weights-by-vehicle-type">8.3 Scoring Weights by Vehicle Type</h3>
+
+<p><strong>Quadcopter (17 active modules):</strong></p>
+
+<table>
+<thead>
+<tr>
+  <th>Module</th>
+  <th>Weight</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td>flight_overview</td>
+  <td>0.10</td>
+</tr>
+<tr>
+  <td>battery</td>
+  <td>0.11</td>
+</tr>
+<tr>
+  <td>sensors</td>
+  <td>0.09</td>
+</tr>
+<tr>
+  <td>motors</td>
+  <td>0.08</td>
+</tr>
+<tr>
+  <td>landing_wind</td>
+  <td>0.06</td>
+</tr>
+<tr>
+  <td>control</td>
+  <td>0.06</td>
+</tr>
+<tr>
+  <td>mission</td>
+  <td>0.06</td>
+</tr>
+<tr>
+  <td>rc_link</td>
+  <td>0.05</td>
+</tr>
+<tr>
+  <td>pid_tuning</td>
+  <td>0.05</td>
+</tr>
+<tr>
+  <td>vibration</td>
+  <td>0.06</td>
+</tr>
+<tr>
+  <td>efficiency</td>
+  <td>0.04</td>
+</tr>
+<tr>
+  <td>fc_health</td>
+  <td>0.04</td>
+</tr>
+<tr>
+  <td>airspeed</td>
+  <td>0.04</td>
+</tr>
+<tr>
+  <td>power_rail</td>
+  <td>0.04</td>
+</tr>
+<tr>
+  <td>telemetry</td>
+  <td>0.04</td>
+</tr>
+<tr>
+  <td>esc_telemetry</td>
+  <td>0.04</td>
+</tr>
+<tr>
+  <td>altitude_control</td>
+  <td>0.04</td>
+</tr>
+</tbody>
+</table>
+
+<p><strong>VTOL QuadPlane (18 active modules):</strong></p>
+
+<table>
+<thead>
+<tr>
+  <th>Module</th>
+  <th>Weight</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td>flight_overview</td>
+  <td>0.10</td>
+</tr>
+<tr>
+  <td>battery</td>
+  <td>0.09</td>
+</tr>
+<tr>
+  <td>sensors</td>
+  <td>0.09</td>
+</tr>
+<tr>
+  <td>vtol_transition</td>
+  <td>0.06</td>
+</tr>
+<tr>
+  <td>motors</td>
+  <td>0.07</td>
+</tr>
+<tr>
+  <td>control</td>
+  <td>0.06</td>
+</tr>
+<tr>
+  <td>mission</td>
+  <td>0.05</td>
+</tr>
+<tr>
+  <td>airspeed</td>
+  <td>0.05</td>
+</tr>
+<tr>
+  <td>pid_tuning</td>
+  <td>0.05</td>
+</tr>
+<tr>
+  <td>rc_link</td>
+  <td>0.05</td>
+</tr>
+<tr>
+  <td>landing_wind</td>
+  <td>0.05</td>
+</tr>
+<tr>
+  <td>vibration</td>
+  <td>0.04</td>
+</tr>
+<tr>
+  <td>efficiency</td>
+  <td>0.04</td>
+</tr>
+<tr>
+  <td>fc_health</td>
+  <td>0.04</td>
+</tr>
+<tr>
+  <td>power_rail</td>
+  <td>0.04</td>
+</tr>
+<tr>
+  <td>telemetry</td>
+  <td>0.04</td>
+</tr>
+<tr>
+  <td>esc_telemetry</td>
+  <td>0.04</td>
+</tr>
+<tr>
+  <td>altitude_control</td>
+  <td>0.04</td>
+</tr>
+</tbody>
+</table>
+
+<p><strong>Fixed-Wing (17 active modules):</strong></p>
+
+<table>
+<thead>
+<tr>
+  <th>Module</th>
+  <th>Weight</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td>flight_overview</td>
+  <td>0.12</td>
+</tr>
+<tr>
+  <td>battery</td>
+  <td>0.12</td>
+</tr>
+<tr>
+  <td>sensors</td>
+  <td>0.09</td>
+</tr>
+<tr>
+  <td>control</td>
+  <td>0.06</td>
+</tr>
+<tr>
+  <td>landing_wind</td>
+  <td>0.06</td>
+</tr>
+<tr>
+  <td>airspeed</td>
+  <td>0.05</td>
+</tr>
+<tr>
+  <td>mission</td>
+  <td>0.05</td>
+</tr>
+<tr>
+  <td>motors</td>
+  <td>0.05</td>
+</tr>
+<tr>
+  <td>pid_tuning</td>
+  <td>0.05</td>
+</tr>
+<tr>
+  <td>efficiency</td>
+  <td>0.05</td>
+</tr>
+<tr>
+  <td>rc_link</td>
+  <td>0.05</td>
+</tr>
+<tr>
+  <td>vibration</td>
+  <td>0.05</td>
+</tr>
+<tr>
+  <td>fc_health</td>
+  <td>0.04</td>
+</tr>
+<tr>
+  <td>power_rail</td>
+  <td>0.04</td>
+</tr>
+<tr>
+  <td>telemetry</td>
+  <td>0.04</td>
+</tr>
+<tr>
+  <td>esc_telemetry</td>
+  <td>0.04</td>
+</tr>
+<tr>
+  <td>altitude_control</td>
+  <td>0.04</td>
+</tr>
+</tbody>
+</table>
+
+<h3 id="84-issue-severity-impact">8.4 Issue Severity Impact</h3>
+
+<p>Scoring deductions are applied within each module independently. The most severe issues have the largest penalty. Representative penalty examples:</p>
+
+<table>
+<thead>
+<tr>
+  <th>Severity Pattern</th>
+  <th>Typical Score Impact per Module</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td>Single Critical</td>
+  <td>−20 to −30 points within module</td>
+</tr>
+<tr>
+  <td>Single Warning</td>
+  <td>−5 to −15 points within module</td>
+</tr>
+<tr>
+  <td>Info only</td>
+  <td>0 points (informational)</td>
+</tr>
+</tbody>
+</table>
+
+<p>Module scores are clamped to the range 0–100 before aggregation.</p>
+
+<hr />
+
+<h2 id="9-fleet-trend-monitoring">9. Fleet &amp; Trend Monitoring</h2>
+
+<h3 id="91-fleet-database-structure">9.1 Fleet Database Structure</h3>
+
+<p>All analyzed flights are stored in <code>fleet.db</code> (SQLite, auto-created). Records are keyed by <code>(drone_name, log_file)</code> — analyzing the same log file for the same drone again overwrites the existing record (upsert).</p>
+
+<p>Data stored per flight:
+- Identity: drone name, type, log filename, flight date, analysis timestamp
+- Summary: overall score, grade, issue counts
+- All 18 module scores
+- Key metrics: battery IR, vibration mean, motor imbalance, efficiency, landing quality</p>
+
+<h3 id="92-trend-detection">9.2 Trend Detection</h3>
+
+<p>Trends are computed when a drone has <strong>3 or more flights</strong> in the database. A linear regression is fitted across the last N flights for each tracked metric.</p>
+
+<p><strong>Tracked metrics for trend alerts:</strong></p>
+
+<table>
+<thead>
+<tr>
+  <th>Metric</th>
+  <th>Alert Direction</th>
+  <th>Alert Threshold</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td>Overall score</td>
+  <td>Declining</td>
+  <td>Slope &lt; −2 per flight</td>
+</tr>
+<tr>
+  <td>Battery internal resistance</td>
+  <td>Rising</td>
+  <td>Slope &gt; +1 mOhm per flight</td>
+</tr>
+<tr>
+  <td>Vibration mean</td>
+  <td>Rising</td>
+  <td>Slope &gt; +0.5 m/s² per flight</td>
+</tr>
+<tr>
+  <td>Motor imbalance</td>
+  <td>Rising</td>
+  <td>Slope &gt; +1% per flight</td>
+</tr>
+</tbody>
+</table>
+
+<h3 id="93-trend-symbols">9.3 Trend Symbols</h3>
+
+<table>
+<thead>
+<tr>
+  <th>Symbol</th>
+  <th>Direction</th>
+  <th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td>↑</td>
+  <td>Rising</td>
+  <td>Metric is increasing</td>
+</tr>
+<tr>
+  <td>↓</td>
+  <td>Falling</td>
+  <td>Metric is decreasing</td>
+</tr>
+<tr>
+  <td>→</td>
+  <td>Stable</td>
+  <td>Metric is stable</td>
+</tr>
+<tr>
+  <td>⚠</td>
+  <td>Alert</td>
+  <td>Trend has exceeded alert threshold</td>
+</tr>
+</tbody>
+</table>
+
+<h3 id="94-fleet-api-endpoints">9.4 Fleet API Endpoints</h3>
+
+<table>
+<thead>
+<tr>
+  <th>Method</th>
+  <th>Endpoint</th>
+  <th>Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td>GET</td>
+  <td><code>/api/fleet</code></td>
+  <td>Overview table (one row per drone)</td>
+</tr>
+<tr>
+  <td>GET</td>
+  <td><code>/api/fleet/{drone_id}/history</code></td>
+  <td>Full history + trends + alerts</td>
+</tr>
+<tr>
+  <td>GET</td>
+  <td><code>/api/fleet/{drone_id}/export</code></td>
+  <td>CSV download (up to 500 flights)</td>
+</tr>
+<tr>
+  <td>DELETE</td>
+  <td><code>/api/fleet/{drone_id}/flights/{id}</code></td>
+  <td>Delete one flight record</td>
+</tr>
+<tr>
+  <td>DELETE</td>
+  <td><code>/api/fleet/{drone_id}</code></td>
+  <td>Delete all flights for a drone</td>
+</tr>
+<tr>
+  <td>DELETE</td>
+  <td><code>/api/fleet</code></td>
+  <td>Clear entire fleet database</td>
+</tr>
+</tbody>
+</table>
+
+<hr />
+
+<h2 id="10-cli-reference">10. CLI Reference</h2>
+
+<h3 id="101-commands">10.1 Commands</h3>
+
+<div class="codehilite">
+<pre><span></span><code><span class="c1"># Analyze a flight log</span>
+python<span class="w"> </span>cli.py<span class="w"> </span>analyze<span class="w"> </span>&lt;LOG_FILE&gt;<span class="w"> </span><span class="o">[</span>OPTIONS<span class="o">]</span>
+
+<span class="c1"># View fleet summary</span>
+python<span class="w"> </span>cli.py<span class="w"> </span>fleet<span class="w"> </span><span class="o">[</span>OPTIONS<span class="o">]</span>
+</code></pre>
+</div>
+
+<h3 id="102-analyze-command-options">10.2 Analyze Command Options</h3>
+
+<table>
+<thead>
+<tr>
+  <th>Flag</th>
+  <th>Short</th>
+  <th>Default</th>
+  <th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td><code>--profile</code></td>
+  <td><code>-p</code></td>
+  <td>auto-detect</td>
+  <td>Path to YAML profile file</td>
+</tr>
+<tr>
+  <td><code>--output</code></td>
+  <td><code>-o</code></td>
+  <td><code>&lt;log&gt;_report.json</code></td>
+  <td>JSON output file path</td>
+</tr>
+<tr>
+  <td><code>--html</code></td>
+  <td>—</td>
+  <td>off</td>
+  <td>Also generate HTML report</td>
+</tr>
+<tr>
+  <td><code>--no-report</code></td>
+  <td>—</td>
+  <td>off</td>
+  <td>Skip JSON write; console output only</td>
+</tr>
+<tr>
+  <td><code>--drone-id</code></td>
+  <td>—</td>
+  <td>profile name</td>
+  <td>Override drone name for fleet grouping</td>
+</tr>
+<tr>
+  <td><code>--verbose</code></td>
+  <td><code>-v</code></td>
+  <td>off</td>
+  <td>Enable debug logging</td>
+</tr>
+</tbody>
+</table>
+
+<h3 id="103-fleet-command-options">10.3 Fleet Command Options</h3>
+
+<table>
+<thead>
+<tr>
+  <th>Flag</th>
+  <th>Short</th>
+  <th>Default</th>
+  <th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td><code>--drone</code></td>
+  <td><code>-d</code></td>
+  <td>—</td>
+  <td>Show history + trends for one drone</td>
+</tr>
+<tr>
+  <td><code>--all</code></td>
+  <td>—</td>
+  <td>off</td>
+  <td>Show all flight records flat</td>
+</tr>
+</tbody>
+</table>
+
+<h3 id="104-example-commands">10.4 Example Commands</h3>
+
+<div class="codehilite">
+<pre><span></span><code><span class="c1"># Analyze each vehicle type with matching profile</span>
+python<span class="w"> </span>cli.py<span class="w"> </span>analyze<span class="w"> </span>Quadcoptor_01.BIN<span class="w"> </span>--profile<span class="w"> </span>profiles/quadcopter.yaml<span class="w"> </span>--html
+python<span class="w"> </span>cli.py<span class="w"> </span>analyze<span class="w"> </span>Quad_plane_01.BIN<span class="w"> </span>--profile<span class="w"> </span>profiles/quadplane.yaml<span class="w"> </span>--html
+python<span class="w"> </span>cli.py<span class="w"> </span>analyze<span class="w"> </span>Fixed_wing_01.BIN<span class="w"> </span>--profile<span class="w"> </span>profiles/fixed_wing.yaml<span class="w"> </span>--html
+
+<span class="c1"># Custom drone ID for fleet grouping</span>
+python<span class="w"> </span>cli.py<span class="w"> </span>analyze<span class="w"> </span>flight.bin<span class="w"> </span>--profile<span class="w"> </span>profiles/quadcopter.yaml<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--drone-id<span class="w"> </span><span class="s2">&quot;UAV-Survey-01&quot;</span><span class="w"> </span>--html
+
+<span class="c1"># Save JSON to specific location</span>
+python<span class="w"> </span>cli.py<span class="w"> </span>analyze<span class="w"> </span>flight.bin<span class="w"> </span>--profile<span class="w"> </span>profiles/quadplane.yaml<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--output<span class="w"> </span>reports/mission_42.json<span class="w"> </span>--html
+
+<span class="c1"># Fleet overview</span>
+python<span class="w"> </span>cli.py<span class="w"> </span>fleet
+
+<span class="c1"># Single drone trend view</span>
+python<span class="w"> </span>cli.py<span class="w"> </span>fleet<span class="w"> </span>--drone<span class="w"> </span><span class="s2">&quot;UAV-Survey-01&quot;</span>
+
+<span class="c1"># All records flat list</span>
+python<span class="w"> </span>cli.py<span class="w"> </span>fleet<span class="w"> </span>--all
+</code></pre>
+</div>
+
+<hr />
+
+<h2 id="11-api-reference">11. API Reference</h2>
+
+<h3 id="111-base-url">11.1 Base URL</h3>
+
+<pre><code>http://localhost:5000
+</code></pre>
+
+<p>No authentication is required for local use. For shared/network deployments, add reverse-proxy authentication.</p>
+
+<h3 id="112-endpoints-summary">11.2 Endpoints Summary</h3>
+
+<table>
+<thead>
+<tr>
+  <th>Method</th>
+  <th>Endpoint</th>
+  <th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td>GET</td>
+  <td><code>/</code></td>
+  <td>Serve web frontend</td>
+</tr>
+<tr>
+  <td>GET</td>
+  <td><code>/api/profiles</code></td>
+  <td>List available vehicle types</td>
+</tr>
+<tr>
+  <td>GET</td>
+  <td><code>/api/profiles/{vehicle_type}</code></td>
+  <td>Get editable profile payload</td>
+</tr>
+<tr>
+  <td>POST</td>
+  <td><code>/api/analyze</code></td>
+  <td>Upload <code>.BIN</code> and run analysis</td>
+</tr>
+<tr>
+  <td>GET</td>
+  <td><code>/api/fleet</code></td>
+  <td>Fleet overview (latest per drone)</td>
+</tr>
+<tr>
+  <td>GET</td>
+  <td><code>/api/fleet/drone-ids</code></td>
+  <td>List distinct drone IDs</td>
+</tr>
+<tr>
+  <td>GET</td>
+  <td><code>/api/fleet/{drone_id}/history</code></td>
+  <td>Drone history + trends + alerts</td>
+</tr>
+<tr>
+  <td>GET</td>
+  <td><code>/api/fleet/{drone_id}/export</code></td>
+  <td>Download history as CSV</td>
+</tr>
+<tr>
+  <td>DELETE</td>
+  <td><code>/api/fleet/{drone_id}/flights/{id}</code></td>
+  <td>Delete one flight</td>
+</tr>
+<tr>
+  <td>DELETE</td>
+  <td><code>/api/fleet/{drone_id}</code></td>
+  <td>Delete all flights for a drone</td>
+</tr>
+<tr>
+  <td>DELETE</td>
+  <td><code>/api/fleet</code></td>
+  <td>Clear entire fleet database</td>
+</tr>
+</tbody>
+</table>
+
+<h3 id="113-post-apianalyze">11.3 POST /api/analyze</h3>
+
+<p><strong>Request:</strong> <code>multipart/form-data</code></p>
+
+<table>
+<thead>
+<tr>
+  <th>Field</th>
+  <th>Type</th>
+  <th>Required</th>
+  <th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td><code>log_file</code></td>
+  <td>file</td>
+  <td>Yes</td>
+  <td><code>.BIN</code> flight log file</td>
+</tr>
+<tr>
+  <td><code>drone_id</code></td>
+  <td>string</td>
+  <td>Yes</td>
+  <td>Drone identifier</td>
+</tr>
+<tr>
+  <td><code>vehicle_type</code></td>
+  <td>string</td>
+  <td>Yes</td>
+  <td><code>quadcopter</code> / <code>quadplane</code> / <code>fixed_wing</code></td>
+</tr>
+<tr>
+  <td><code>profile_overrides</code></td>
+  <td>JSON string</td>
+  <td>No</td>
+  <td>Runtime profile field overrides</td>
+</tr>
+</tbody>
+</table>
+
+<p><strong>Example — cURL:</strong></p>
+
+<div class="codehilite">
+<pre><span></span><code>curl<span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span><span class="s2">&quot;http://localhost:5000/api/analyze&quot;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-F<span class="w"> </span><span class="s2">&quot;log_file=@Quadcoptor_01.BIN&quot;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-F<span class="w"> </span><span class="s2">&quot;drone_id=UAV-001&quot;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-F<span class="w"> </span><span class="s2">&quot;vehicle_type=quadcopter&quot;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-F<span class="w"> </span><span class="s1">&#39;profile_overrides={&quot;battery&quot;:{&quot;cell_count&quot;:6}}&#39;</span>
+</code></pre>
+</div>
+
+<p><strong>Example — Python:</strong></p>
+
+<div class="codehilite">
+<pre><span></span><code><span class="kn">import</span><span class="w"> </span><span class="nn">json</span><span class="o">,</span><span class="w"> </span><span class="nn">requests</span>
+
+<span class="n">r</span> <span class="o">=</span> <span class="n">requests</span><span class="o">.</span><span class="n">post</span><span class="p">(</span>
+    <span class="s2">&quot;http://localhost:5000/api/analyze&quot;</span><span class="p">,</span>
+    <span class="n">files</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;log_file&quot;</span><span class="p">:</span> <span class="nb">open</span><span class="p">(</span><span class="s2">&quot;flight.bin&quot;</span><span class="p">,</span> <span class="s2">&quot;rb&quot;</span><span class="p">)},</span>
+    <span class="n">data</span><span class="o">=</span><span class="p">{</span>
+        <span class="s2">&quot;drone_id&quot;</span><span class="p">:</span> <span class="s2">&quot;UAV-001&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;vehicle_type&quot;</span><span class="p">:</span> <span class="s2">&quot;quadplane&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;profile_overrides&quot;</span><span class="p">:</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">({</span>
+            <span class="s2">&quot;expected_endurance_min&quot;</span><span class="p">:</span> <span class="mi">45</span><span class="p">,</span>
+            <span class="s2">&quot;battery&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;cell_count&quot;</span><span class="p">:</span> <span class="mi">12</span><span class="p">,</span> <span class="s2">&quot;capacity_mah&quot;</span><span class="p">:</span> <span class="mi">22000</span><span class="p">}</span>
+        <span class="p">})</span>
+    <span class="p">},</span>
+    <span class="n">timeout</span><span class="o">=</span><span class="mi">300</span>
+<span class="p">)</span>
+<span class="n">report</span> <span class="o">=</span> <span class="n">r</span><span class="o">.</span><span class="n">json</span><span class="p">()</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">report</span><span class="p">[</span><span class="s2">&quot;flight_summary&quot;</span><span class="p">][</span><span class="s2">&quot;overall_score&quot;</span><span class="p">])</span>
+</code></pre>
+</div>
+
+<p><strong>Response structure:</strong></p>
+
+<div class="codehilite">
+<pre><span></span><code><span class="p">{</span>
+<span class="w">  </span><span class="nt">&quot;meta&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nt">&quot;analyzer_version&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;1.0.0&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">&quot;generated_at&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;2026-04-10T08:00:00Z&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">&quot;log_file&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;flight.BIN&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">&quot;drone_name&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;UAV-001&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">&quot;drone_type&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;vtol&quot;</span>
+<span class="w">  </span><span class="p">},</span>
+<span class="w">  </span><span class="nt">&quot;flight_summary&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nt">&quot;overall_score&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">94.8</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">&quot;grade&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;A&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">&quot;verdict&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;EXCELLENT&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">&quot;action&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Ready for next mission&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">&quot;issue_summary&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nt">&quot;critical&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">0</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;warning&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">3</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;info&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">6</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;total&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">9</span><span class="w"> </span><span class="p">},</span>
+<span class="w">    </span><span class="nt">&quot;module_scores&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nt">&quot;battery&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nt">&quot;score&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">96.0</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;grade&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;A&quot;</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;available&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="p">}</span>
+<span class="w">  </span><span class="p">},</span>
+<span class="w">  </span><span class="nt">&quot;module_results&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="err">...</span><span class="w"> </span><span class="p">},</span>
+<span class="w">  </span><span class="nt">&quot;all_issues&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="w"> </span><span class="err">...</span><span class="w"> </span><span class="p">],</span>
+<span class="w">  </span><span class="nt">&quot;recommendations&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="w"> </span><span class="err">...</span><span class="w"> </span><span class="p">],</span>
+<span class="w">  </span><span class="nt">&quot;flight_id&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">42</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;html_report_url&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;/reports/flight_42_report.html&quot;</span>
+<span class="p">}</span>
+</code></pre>
+</div>
+
+<h3 id="114-get-apiprofilesvehicle_type">11.4 GET /api/profiles/{vehicle_type}</h3>
+
+<p>Returns all editable profile fields for the UI settings panel.</p>
+
+<div class="codehilite">
+<pre><span></span><code>curl<span class="w"> </span>http://localhost:5000/api/profiles/quadplane
+</code></pre>
+</div>
+
+<h3 id="115-get-apifleetdrone_idhistory">11.5 GET /api/fleet/{drone_id}/history</h3>
+
+<p>Returns:
+- <code>drone_id</code>, <code>drone_type</code>, <code>total_flights</code>
+- <code>history[]</code> — array of flight records
+- <code>trends{}</code> — trend objects keyed by metric name
+- <code>alerts[]</code> — active alert message strings</p>
+
+<hr />
+
+<h2 id="12-troubleshooting-faq">12. Troubleshooting &amp; FAQ</h2>
+
+<h3 id="121-common-errors">12.1 Common Errors</h3>
+
+<table>
+<thead>
+<tr>
+  <th>Error</th>
+  <th>Cause</th>
+  <th>Resolution</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td><code>Only .BIN files are supported</code></td>
+  <td>Wrong file type uploaded</td>
+  <td>Upload raw DataFlash <code>.BIN</code> from SD card</td>
+</tr>
+<tr>
+  <td><code>Drone ID is required</code></td>
+  <td>Empty drone ID field</td>
+  <td>Enter a non-empty drone name</td>
+</tr>
+<tr>
+  <td><code>Unknown vehicle type</code></td>
+  <td>Invalid vehicle_type value</td>
+  <td>Use <code>quadcopter</code>, <code>quadplane</code>, or <code>fixed_wing</code></td>
+</tr>
+<tr>
+  <td>Port 5000 already in use</td>
+  <td>Previous server instance still running</td>
+  <td>Change port in <code>run_web.py</code>: <code>port=5001</code></td>
+</tr>
+<tr>
+  <td><code>No module named 'pymavlink'</code></td>
+  <td>Dependencies not installed</td>
+  <td>Run <code>pip install -r requirements.txt</code></td>
+</tr>
+<tr>
+  <td><code>PARSE ERROR</code> in CLI</td>
+  <td>Corrupt or non-DataFlash file</td>
+  <td>Re-export raw <code>.BIN</code> from flight controller SD card</td>
+</tr>
+<tr>
+  <td>Module shows <code>available: false</code></td>
+  <td>Required log messages missing</td>
+  <td>See Section 12.2 below</td>
+</tr>
+</tbody>
+</table>
+
+<h3 id="122-module-unavailability">12.2 Module Unavailability</h3>
+
+<p>Some modules require specific ArduPilot logging parameters to be enabled:</p>
+
+<table>
+<thead>
+<tr>
+  <th>Module</th>
+  <th>Cause of Unavailability</th>
+  <th>How to Enable</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td><code>pid_tuning</code></td>
+  <td>PIDR/PIDP not in log</td>
+  <td>Set <code>LOG_BITMASK</code> bit 6 in ArduPilot params</td>
+</tr>
+<tr>
+  <td><code>telemetry</code></td>
+  <td>RADIO messages absent</td>
+  <td>Connect SiK/RFD900 radio; enable RADIO logging</td>
+</tr>
+<tr>
+  <td><code>esc_telemetry</code></td>
+  <td>ESC messages absent</td>
+  <td>Configure BLHeli32/AM32 ESC telemetry passthrough</td>
+</tr>
+<tr>
+  <td><code>airspeed</code></td>
+  <td>Multirotor type</td>
+  <td>Module not applicable; returns score 100</td>
+</tr>
+<tr>
+  <td><code>vtol_transition</code></td>
+  <td>Non-VTOL type</td>
+  <td>Module not applicable; returns score 100</td>
+</tr>
+<tr>
+  <td><code>mission</code></td>
+  <td>No CMD data or no AUTO mode</td>
+  <td>Ensure CMD messages are logged; fly an AUTO mission</td>
+</tr>
+<tr>
+  <td><code>rc_link</code></td>
+  <td>No RCIN/RSSI messages</td>
+  <td>Check RC logging configuration</td>
+</tr>
+</tbody>
+</table>
+
+<h3 id="123-port-conflict-resolution">12.3 Port Conflict Resolution</h3>
+
+<p>If port 5000 is taken:</p>
+
+<div class="codehilite">
+<pre><span></span><code><span class="c1"># In run_web.py, change:</span>
+<span class="n">uvicorn</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">app</span><span class="p">,</span> <span class="n">host</span><span class="o">=</span><span class="s2">&quot;0.0.0.0&quot;</span><span class="p">,</span> <span class="n">port</span><span class="o">=</span><span class="mi">5000</span><span class="p">)</span>
+<span class="c1"># To:</span>
+<span class="n">uvicorn</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">app</span><span class="p">,</span> <span class="n">host</span><span class="o">=</span><span class="s2">&quot;0.0.0.0&quot;</span><span class="p">,</span> <span class="n">port</span><span class="o">=</span><span class="mi">5001</span><span class="p">)</span>
+</code></pre>
+</div>
+
+<p>Then open <code>http://localhost:5001</code>.</p>
+
+<h3 id="124-frequently-asked-questions">12.4 Frequently Asked Questions</h3>
+
+<p><strong>Q: Which log format does the tool support?</strong><br />
+A: ArduPilot DataFlash <code>.BIN</code> logs only. These come from the SD card on the flight controller. <code>.tlog</code> (telemetry logs) and <code>.log</code> (text logs) are not supported.</p>
+
+<p><strong>Q: Does the tool send data to any cloud service?</strong><br />
+A: No. All processing and storage is local. No internet connection is used during analysis.</p>
+
+<p><strong>Q: Why does the overall score change slightly after hardware replacement?</strong><br />
+A: The score reflects actual flight data against your profile thresholds. After replacement, update the profile if component specs changed (e.g. new battery capacity or motor type).</p>
+
+<p><strong>Q: How many flights are needed before trend graphs appear?</strong><br />
+A: Minimum 3 flights per drone. Trend regression requires at least 3 data points.</p>
+
+<p><strong>Q: Can I customize the scoring weights?</strong><br />
+A: Yes. Edit the <code>scoring_weights</code> section in your YAML profile file. Weights must sum to 1.0.</p>
+
+<p><strong>Q: Why does my VTOL show available=false for vtol_transition?</strong><br />
+A: Ensure you selected <strong>VTOL Hybrid</strong> (not Quadcopter) and uploaded a QuadPlane log. Check that the log contains Q-mode entries and fixed-wing cruise segments.</p>
+
+<p><strong>Q: Can I run multiple analyses at the same time?</strong><br />
+A: The web server processes one analysis request at a time per upload. Do not submit multiple concurrent analysis requests.</p>
+
+<p><strong>Q: How do I update the tool to the latest version?</strong>  </p>
+
+<div class="codehilite">
+<pre><span></span><code>git<span class="w"> </span>pull
+pip<span class="w"> </span>install<span class="w"> </span>-r<span class="w"> </span>requirements.txt
+python<span class="w"> </span>run_web.py
+</code></pre>
+</div>
+
+<hr />
+
+<h2 id="13-glossary">13. Glossary</h2>
+
+<table>
+<thead>
+<tr>
+  <th>Term</th>
+  <th>Definition</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td>ArduPilot</td>
+  <td>Open-source autopilot firmware for multirotors, fixed-wing, VTOL, and more</td>
+</tr>
+<tr>
+  <td>DataFlash <code>.BIN</code></td>
+  <td>Binary onboard flight log produced by ArduPilot on the SD card</td>
+</tr>
+<tr>
+  <td>Module</td>
+  <td>Independent analysis component (e.g. battery, motors, vibration)</td>
+</tr>
+<tr>
+  <td>Overall Score</td>
+  <td>Weighted aggregate score from 0 to 100 derived from all module scores</td>
+</tr>
+<tr>
+  <td>Grade</td>
+  <td>Letter grade A–F derived from overall score</td>
+</tr>
+<tr>
+  <td>Issue Code</td>
+  <td>Stable identifier for a detected condition (e.g. <code>BAT-002</code>)</td>
+</tr>
+<tr>
+  <td>Severity</td>
+  <td>Issue criticality: <code>critical</code> (ground aircraft), <code>warning</code> (investigate), <code>info</code> (context)</td>
+</tr>
+<tr>
+  <td>Profile</td>
+  <td>YAML file defining vehicle-specific thresholds, expectations, and scoring weights</td>
+</tr>
+<tr>
+  <td>Override</td>
+  <td>Runtime profile value substitution sent from UI or API without editing YAML</td>
+</tr>
+<tr>
+  <td>Fleet History</td>
+  <td>Per-drone list of all analyzed flights stored in the local SQLite database</td>
+</tr>
+<tr>
+  <td>Trend Slope</td>
+  <td>Per-flight change rate for a metric, computed via linear regression</td>
+</tr>
+<tr>
+  <td>Availability Flag</td>
+  <td>Module field (<code>available</code>) indicating whether required log data existed</td>
+</tr>
+<tr>
+  <td>ARSP</td>
+  <td>Dedicated airspeed sensor log message in ArduPilot</td>
+</tr>
+<tr>
+  <td>VTOL</td>
+  <td>Vertical Take-Off and Landing aircraft (e.g. QuadPlane)</td>
+</tr>
+<tr>
+  <td>EKF</td>
+  <td>Extended Kalman Filter — ArduPilot sensor fusion algorithm</td>
+</tr>
+<tr>
+  <td>HDOP</td>
+  <td>Horizontal Dilution of Precision — GPS accuracy indicator (lower is better)</td>
+</tr>
+<tr>
+  <td>BEC</td>
+  <td>Battery Eliminator Circuit — voltage regulator for FC/servo power rail</td>
+</tr>
+<tr>
+  <td>ESC</td>
+  <td>Electronic Speed Controller — drives each motor from PWM or CAN signal</td>
+</tr>
+<tr>
+  <td>LOG_BITMASK</td>
+  <td>ArduPilot parameter controlling which message types are written to the log</td>
+</tr>
+<tr>
+  <td>RCOU</td>
+  <td>Radio Control Output — logged PWM values sent to each motor/servo channel</td>
+</tr>
+</tbody>
+</table>
+
+<hr />
+
+<p><em>UAV Flight Analyzer — Internal Technical Documentation</em><br />
+<em>All analysis is performed locally. No data is transmitted externally.</em></p>
+
+</div>
+
+</body>
+</html>
