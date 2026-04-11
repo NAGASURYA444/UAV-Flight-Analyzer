@@ -178,6 +178,23 @@ UAV-Flight-Analyzer/
 
 ---
 
+## Feedback & Bug Reports
+
+Suggestions, bug reports, and real-world use cases are welcome.
+
+- **GitHub Issues:** [Open an issue](https://github.com/NAGASURYA444/UAV-Flight-Analyzer/issues)
+- **Email:** nagasurya@aereo.io
+
+If you fly ArduPilot drones — try it, use it, and share your feedback. It helps make the tool better for everyone.
+
+---
+
+## Built With
+
+Developed using **Claude AI** through vibe coding.
+
+---
+
 ## License
 
 For internal / operational use. Contact the maintainer for licensing questions.
