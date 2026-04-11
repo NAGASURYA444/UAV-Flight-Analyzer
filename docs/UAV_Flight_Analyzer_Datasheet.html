@@ -1,0 +1,603 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>UAV Flight Analyzer — Product Datasheet</title>
+<style>
+
+/* ── Reset ── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+@page {
+  size: A4;
+  margin: 0;
+}
+
+body {
+  font-family: 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+  background: #ffffff;
+  color: #1a1a2e;
+  width: 210mm;
+  min-height: 297mm;
+  margin: 0 auto;
+}
+
+/* ── Header ── */
+.header {
+  background: #0f1b35;
+  color: #fff;
+  padding: 9mm 12mm 7mm 12mm;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+}
+
+.header-left .tag {
+  font-size: 7pt;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: #7eb3e8;
+  margin-bottom: 2mm;
+}
+
+.header-left h1 {
+  font-size: 22pt;
+  font-weight: 700;
+  line-height: 1.1;
+  color: #ffffff;
+}
+
+.header-left .tagline {
+  font-size: 9pt;
+  color: #a8c4e0;
+  margin-top: 2mm;
+}
+
+.header-right {
+  text-align: right;
+  font-size: 7.5pt;
+  color: #7eb3e8;
+  line-height: 1.8;
+}
+
+/* ── Accent bar ── */
+.accent-bar {
+  height: 3px;
+  background: linear-gradient(90deg, #3a7bd5 0%, #00d2ff 100%);
+}
+
+/* ── Body layout ── */
+.body {
+  padding: 6mm 12mm 6mm 12mm;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 5mm;
+}
+
+/* ── Section titles ── */
+.section-title {
+  font-size: 7.5pt;
+  font-weight: 700;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: #3a7bd5;
+  border-bottom: 1.5px solid #3a7bd5;
+  padding-bottom: 1mm;
+  margin-bottom: 3mm;
+}
+
+/* ── Overview block (full width) ── */
+.overview {
+  grid-column: 1 / -1;
+  background: #f0f5ff;
+  border-left: 4px solid #3a7bd5;
+  padding: 4mm 5mm;
+  border-radius: 0 3px 3px 0;
+}
+
+.overview p {
+  font-size: 9pt;
+  line-height: 1.6;
+  color: #1a2a4e;
+}
+
+/* ── Capability grid (full width) ── */
+.capabilities {
+  grid-column: 1 / -1;
+}
+
+.cap-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 3mm;
+}
+
+.cap-card {
+  background: #f7f9ff;
+  border: 1px solid #dde6f8;
+  border-radius: 3px;
+  padding: 3mm 4mm;
+}
+
+.cap-card .icon {
+  font-size: 14pt;
+  margin-bottom: 1mm;
+  display: block;
+}
+
+.cap-card .cap-title {
+  font-size: 8pt;
+  font-weight: 700;
+  color: #0f1b35;
+  margin-bottom: 1mm;
+}
+
+.cap-card p {
+  font-size: 7.5pt;
+  color: #444;
+  line-height: 1.5;
+}
+
+/* ── Industry use cases ── */
+.use-cases {
+  grid-column: 1 / 2;
+}
+
+.use-case-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 2.5mm;
+  margin-bottom: 3mm;
+}
+
+.use-case-item .dot {
+  width: 5mm;
+  height: 5mm;
+  min-width: 5mm;
+  background: #3a7bd5;
+  border-radius: 50%;
+  margin-top: 0.5mm;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-size: 6pt;
+  font-weight: 700;
+}
+
+.use-case-item .content .title {
+  font-size: 8.5pt;
+  font-weight: 700;
+  color: #0f1b35;
+}
+
+.use-case-item .content p {
+  font-size: 7.5pt;
+  color: #444;
+  line-height: 1.5;
+  margin-top: 0.5mm;
+}
+
+/* ── Module list ── */
+.modules {
+  grid-column: 2 / 3;
+}
+
+.module-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5mm 3mm;
+}
+
+.module-item {
+  font-size: 7.5pt;
+  color: #2a3a5e;
+  padding: 1mm 0;
+  border-bottom: 1px solid #eef2fb;
+  display: flex;
+  align-items: center;
+  gap: 1.5mm;
+}
+
+.module-item::before {
+  content: '';
+  display: inline-block;
+  width: 3px;
+  height: 3px;
+  background: #3a7bd5;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+/* ── Scoring & output ── */
+.scoring {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 3mm;
+}
+
+.grade-card {
+  border-radius: 4px;
+  padding: 3mm;
+  text-align: center;
+}
+
+.grade-card .letter {
+  font-size: 18pt;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.grade-card .range {
+  font-size: 7pt;
+  margin-top: 1mm;
+  font-weight: 600;
+}
+
+.grade-card .label {
+  font-size: 6.5pt;
+  margin-top: 1mm;
+  opacity: 0.85;
+}
+
+.grade-a { background: #e6f9f0; color: #1a7a4a; }
+.grade-b { background: #eaf4ff; color: #1a5ea8; }
+.grade-c { background: #fff8e6; color: #a86a00; }
+.grade-d { background: #fff0e6; color: #a84400; }
+.grade-f { background: #fce8e8; color: #a81a1a; }
+
+/* ── Specs ── */
+.specs {
+  grid-column: 1 / 2;
+}
+
+.spec-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 7.5pt;
+  padding: 1.5mm 0;
+  border-bottom: 1px solid #eef2fb;
+}
+
+.spec-row .label { color: #666; }
+.spec-row .value { font-weight: 600; color: #0f1b35; text-align: right; }
+
+/* ── Output formats ── */
+.outputs {
+  grid-column: 2 / 3;
+}
+
+.output-item {
+  display: flex;
+  align-items: center;
+  gap: 3mm;
+  padding: 2mm 3mm;
+  margin-bottom: 2mm;
+  background: #f7f9ff;
+  border-radius: 3px;
+  border: 1px solid #dde6f8;
+}
+
+.output-item .out-icon {
+  font-size: 12pt;
+  width: 8mm;
+  text-align: center;
+}
+
+.output-item .out-text .title {
+  font-size: 8pt;
+  font-weight: 700;
+  color: #0f1b35;
+}
+
+.output-item .out-text p {
+  font-size: 7pt;
+  color: #555;
+  margin-top: 0.3mm;
+}
+
+/* ── Footer ── */
+.footer {
+  background: #0f1b35;
+  color: #a8c4e0;
+  padding: 4mm 12mm;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: auto;
+}
+
+.footer .left {
+  font-size: 7.5pt;
+  line-height: 1.8;
+}
+
+.footer .left span {
+  color: #7eb3e8;
+  font-weight: 600;
+}
+
+.footer .right {
+  text-align: right;
+  font-size: 7.5pt;
+  line-height: 1.8;
+}
+
+.footer .right a {
+  color: #7eb3e8;
+  text-decoration: none;
+}
+
+.footer .badge {
+  display: inline-block;
+  background: #3a7bd5;
+  color: #fff;
+  font-size: 6.5pt;
+  font-weight: 700;
+  padding: 0.5mm 2mm;
+  border-radius: 2px;
+  letter-spacing: 0.5px;
+  margin-top: 1mm;
+}
+
+/* ── Print ── */
+@media print {
+  body { width: 210mm; }
+}
+
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="header">
+  <div class="header-left">
+    <div class="tag">Product Datasheet</div>
+    <h1>UAV Flight Analyzer</h1>
+    <div class="tagline">Automated Flight Log Analysis &amp; Fleet Health Monitoring</div>
+  </div>
+  <div class="header-right">
+    Version 1.0 &nbsp;|&nbsp; April 2026<br>
+    ArduPilot DataFlash .BIN<br>
+    Quadcopter &bull; VTOL &bull; Fixed-Wing
+  </div>
+</div>
+<div class="accent-bar"></div>
+
+<!-- BODY -->
+<div class="body">
+
+  <!-- OVERVIEW -->
+  <div class="overview">
+    <div class="section-title">Overview</div>
+    <p>
+      UAV Flight Analyzer is a <strong>local, offline flight log analysis platform</strong> for ArduPilot-based aircraft.
+      It automatically parses raw DataFlash <strong>.BIN</strong> logs from the flight controller SD card, runs
+      <strong>18 independent health analysis modules</strong> across every critical system domain, and produces a
+      weighted flight health score, prioritized maintenance recommendations, and a professional HTML report —
+      all within seconds. Fleet trend tracking with linear regression identifies degradation across multiple
+      flights <em>before</em> it causes a failure in the field.
+    </p>
+  </div>
+
+  <!-- CAPABILITIES -->
+  <div class="capabilities">
+    <div class="section-title">Core Capabilities</div>
+    <div class="cap-grid">
+
+      <div class="cap-card">
+        <span class="icon">⚡</span>
+        <div class="cap-title">Instant Health Scoring</div>
+        <p>Weighted 0–100 score with A–F grade derived from 18 modules. Results in seconds, not hours.</p>
+      </div>
+
+      <div class="cap-card">
+        <span class="icon">🔍</span>
+        <div class="cap-title">Issue Code Detection</div>
+        <p>110+ stable issue codes across all modules. Every issue includes observed value, threshold, and recommended action.</p>
+      </div>
+
+      <div class="cap-card">
+        <span class="icon">📊</span>
+        <div class="cap-title">Fleet Trend Analytics</div>
+        <p>Linear regression across flight history. Alerts on battery IR rise, vibration growth, or score decline — before failure.</p>
+      </div>
+
+      <div class="cap-card">
+        <span class="icon">📋</span>
+        <div class="cap-title">Professional Reports</div>
+        <p>Self-contained HTML report per flight. Downloadable, shareable, and maintenance-record ready.</p>
+      </div>
+
+      <div class="cap-card">
+        <span class="icon">🔒</span>
+        <div class="cap-title">100% Local & Offline</div>
+        <p>No cloud. No subscription. No data transmitted. Runs on any laptop. Suitable for sensitive operations.</p>
+      </div>
+
+      <div class="cap-card">
+        <span class="icon">🌐</span>
+        <div class="cap-title">Web UI + REST API</div>
+        <p>Browser-based interface for operators. Full REST API for automation, integration, and CI workflows.</p>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- USE CASES -->
+  <div class="use-cases">
+    <div class="section-title">Industry Applications</div>
+
+    <div class="use-case-item">
+      <div class="dot">1</div>
+      <div class="content">
+        <div class="title">Survey &amp; Mapping Operations</div>
+        <p>Validate mission waypoint completion, cross-track error, and altitude hold accuracy after every survey flight. Catch GPS or navigation issues before the next mission.</p>
+      </div>
+    </div>
+
+    <div class="use-case-item">
+      <div class="dot">2</div>
+      <div class="content">
+        <div class="title">Inspection &amp; Infrastructure Drones</div>
+        <p>Monitor battery internal resistance trends, vibration growth, and motor imbalance across a fleet of inspection aircraft. Schedule maintenance based on data, not guesswork.</p>
+      </div>
+    </div>
+
+    <div class="use-case-item">
+      <div class="dot">3</div>
+      <div class="content">
+        <div class="title">Defense &amp; Tactical UAV Units</div>
+        <p>Post-mission log review without cloud dependency. Sensitive operational data stays local. Issue codes provide structured grounds for grounding decisions.</p>
+      </div>
+    </div>
+
+    <div class="use-case-item">
+      <div class="dot">4</div>
+      <div class="content">
+        <div class="title">VTOL Cargo &amp; Logistics</div>
+        <p>Analyse VTOL hover-to-cruise transition quality, pusher motor health, and airspeed envelope adherence — metrics critical for long-range cargo reliability.</p>
+      </div>
+    </div>
+
+    <div class="use-case-item">
+      <div class="dot">5</div>
+      <div class="content">
+        <div class="title">Research &amp; Development</div>
+        <p>Structured JSON output enables automated regression testing after firmware updates or hardware changes. Compare flight scores before and after modifications.</p>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ANALYSIS MODULES -->
+  <div class="modules">
+    <div class="section-title">18 Analysis Modules</div>
+    <div class="module-grid">
+      <div class="module-item">Flight Overview</div>
+      <div class="module-item">Battery Health</div>
+      <div class="module-item">Motor Analysis</div>
+      <div class="module-item">Vibration &amp; FFT</div>
+      <div class="module-item">Sensor Health</div>
+      <div class="module-item">Control Quality</div>
+      <div class="module-item">Efficiency (Wh/km)</div>
+      <div class="module-item">RC Link Quality</div>
+      <div class="module-item">Landing &amp; Wind</div>
+      <div class="module-item">FC Power Health</div>
+      <div class="module-item">VTOL Transition</div>
+      <div class="module-item">Mission Execution</div>
+      <div class="module-item">Airspeed Health</div>
+      <div class="module-item">PID Tuning</div>
+      <div class="module-item">Power Rail</div>
+      <div class="module-item">Telemetry Link</div>
+      <div class="module-item">ESC Telemetry</div>
+      <div class="module-item">Altitude Control</div>
+    </div>
+  </div>
+
+  <!-- SCORING -->
+  <div style="grid-column: 1 / -1;">
+    <div class="section-title">Flight Health Grading System</div>
+    <div class="scoring">
+      <div class="grade-card grade-a">
+        <div class="letter">A</div>
+        <div class="range">90 – 100</div>
+        <div class="label">EXCELLENT<br>Ready to fly</div>
+      </div>
+      <div class="grade-card grade-b">
+        <div class="letter">B</div>
+        <div class="range">75 – 89</div>
+        <div class="label">GOOD<br>Monitor closely</div>
+      </div>
+      <div class="grade-card grade-c">
+        <div class="letter">C</div>
+        <div class="range">60 – 74</div>
+        <div class="label">FAIR<br>Inspect before flight</div>
+      </div>
+      <div class="grade-card grade-d">
+        <div class="letter">D</div>
+        <div class="range">40 – 59</div>
+        <div class="label">POOR<br>Schedule maintenance</div>
+      </div>
+      <div class="grade-card grade-f">
+        <div class="letter">F</div>
+        <div class="range">0 – 39</div>
+        <div class="label">CRITICAL<br>Ground aircraft</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SPECS -->
+  <div class="specs">
+    <div class="section-title">Technical Specifications</div>
+    <div class="spec-row"><span class="label">Input Format</span><span class="value">ArduPilot DataFlash .BIN</span></div>
+    <div class="spec-row"><span class="label">Supported Vehicles</span><span class="value">Quadcopter, Hexacopter, Octocopter, VTOL, Fixed-Wing</span></div>
+    <div class="spec-row"><span class="label">Firmware Compatibility</span><span class="value">ArduCopter, ArduPlane (auto-detected)</span></div>
+    <div class="spec-row"><span class="label">Analysis Modules</span><span class="value">18 independent modules</span></div>
+    <div class="spec-row"><span class="label">Issue Codes</span><span class="value">110+ stable codes across all modules</span></div>
+    <div class="spec-row"><span class="label">Fleet Database</span><span class="value">Local SQLite — auto-managed</span></div>
+    <div class="spec-row"><span class="label">Trend Detection</span><span class="value">Linear regression (min. 3 flights)</span></div>
+    <div class="spec-row"><span class="label">Interface</span><span class="value">Web UI (browser) + CLI + REST API</span></div>
+    <div class="spec-row"><span class="label">Runtime</span><span class="value">Python 3.10+ — Windows / macOS / Linux</span></div>
+    <div class="spec-row"><span class="label">Connectivity</span><span class="value">Fully offline — no internet required</span></div>
+    <div class="spec-row"><span class="label">Deployment</span><span class="value">Local install via git clone</span></div>
+    <div class="spec-row"><span class="label">License</span><span class="value">Open Source</span></div>
+  </div>
+
+  <!-- OUTPUTS -->
+  <div class="outputs">
+    <div class="section-title">Report Outputs</div>
+
+    <div class="output-item">
+      <div class="out-icon">🌐</div>
+      <div class="out-text">
+        <div class="title">HTML Flight Report</div>
+        <p>Self-contained, shareable report with score, radar chart, module cards, and full issue list.</p>
+      </div>
+    </div>
+
+    <div class="output-item">
+      <div class="out-icon">📄</div>
+      <div class="out-text">
+        <div class="title">JSON Analysis Data</div>
+        <p>Structured machine-readable output — integrates with maintenance systems, dashboards, or CI pipelines.</p>
+      </div>
+    </div>
+
+    <div class="output-item">
+      <div class="out-icon">📈</div>
+      <div class="out-text">
+        <div class="title">Fleet Trend Dashboard</div>
+        <p>Per-drone history graphs with trend direction arrows and automated maintenance alerts.</p>
+      </div>
+    </div>
+
+    <div class="output-item">
+      <div class="out-icon">📥</div>
+      <div class="out-text">
+        <div class="title">CSV Fleet Export</div>
+        <p>Full flight history export per drone for offline analysis or maintenance record systems.</p>
+      </div>
+    </div>
+
+  </div>
+
+</div>
+
+<!-- FOOTER -->
+<div class="footer">
+  <div class="left">
+    <span>UAV Flight Analyzer</span> — Automated ArduPilot Log Analysis &amp; Fleet Health Monitoring<br>
+    Feedback, bug reports &amp; suggestions: <span>nagasurya@aereo.io</span><br>
+    <span class="badge">Built with Claude AI</span>
+  </div>
+  <div class="right">
+    Open Source &bull; Free to Use<br>
+    <a href="https://github.com/NAGASURYA444/UAV-Flight-Analyzer">github.com/NAGASURYA444/UAV-Flight-Analyzer</a><br>
+    github.com/NAGASURYA444/UAV-Flight-Analyzer/issues
+  </div>
+</div>
+
+</body>
+</html>
