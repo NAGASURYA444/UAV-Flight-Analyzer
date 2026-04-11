@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>UAV Flight Analyzer — Purpose & Industry Value</title>
+<style>
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+@page { size: A4; margin: 0; }
+
+body {
+  font-family: 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+  background: #ffffff;
+  color: #1a1a2e;
+  width: 210mm;
+  min-height: 297mm;
+  margin: 0 auto;
+}
+
+/* ── Header ── */
+.header {
+  background: #0f1b35;
+  padding: 10mm 12mm 8mm 12mm;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+}
+
+.header-left .tag {
+  font-size: 7pt;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: #7eb3e8;
+  margin-bottom: 2mm;
+}
+
+.header-left h1 {
+  font-size: 22pt;
+  font-weight: 700;
+  color: #ffffff;
+  line-height: 1.1;
+}
+
+.header-left .sub {
+  font-size: 10pt;
+  color: #a8c4e0;
+  margin-top: 2mm;
+}
+
+.header-right {
+  text-align: right;
+  font-size: 7.5pt;
+  color: #7eb3e8;
+  line-height: 1.9;
+}
+
+.accent-bar {
+  height: 3px;
+  background: linear-gradient(90deg, #3a7bd5, #00d2ff);
+}
+
+/* ── Hero statement ── */
+.hero {
+  background: #f0f5ff;
+  border-left: 5px solid #3a7bd5;
+  margin: 8mm 12mm 6mm 12mm;
+  padding: 5mm 6mm;
+  border-radius: 0 4px 4px 0;
+}
+
+.hero .question {
+  font-size: 13pt;
+  font-weight: 700;
+  color: #0f1b35;
+  line-height: 1.4;
+}
+
+.hero .answer {
+  font-size: 9pt;
+  color: #2a4a7e;
+  margin-top: 2mm;
+  line-height: 1.6;
+}
+
+/* ── Body ── */
+.body {
+  padding: 0 12mm 6mm 12mm;
+}
+
+/* ── Section title ── */
+.section-title {
+  font-size: 7.5pt;
+  font-weight: 700;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: #3a7bd5;
+  border-bottom: 1.5px solid #3a7bd5;
+  padding-bottom: 1mm;
+  margin: 5mm 0 3mm 0;
+}
+
+/* ── Problem block ── */
+.problem-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 3mm;
+  margin-bottom: 2mm;
+}
+
+.problem-card {
+  background: #fff5f5;
+  border: 1px solid #f5c6c6;
+  border-left: 3px solid #c0392b;
+  border-radius: 3px;
+  padding: 3mm 4mm;
+}
+
+.problem-card .p-title {
+  font-size: 8pt;
+  font-weight: 700;
+  color: #8b1a1a;
+  margin-bottom: 1mm;
+}
+
+.problem-card p {
+  font-size: 7.5pt;
+  color: #5a2a2a;
+  line-height: 1.5;
+}
+
+/* ── How it works ── */
+.steps {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 2.5mm;
+  margin-bottom: 2mm;
+}
+
+.step {
+  text-align: center;
+  padding: 3mm 2mm;
+  background: #f7f9ff;
+  border: 1px solid #dde6f8;
+  border-radius: 4px;
+  position: relative;
+}
+
+.step .num {
+  background: #3a7bd5;
+  color: #fff;
+  font-size: 9pt;
+  font-weight: 800;
+  width: 7mm;
+  height: 7mm;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 2mm auto;
+}
+
+.step .s-title {
+  font-size: 7.5pt;
+  font-weight: 700;
+  color: #0f1b35;
+  margin-bottom: 1mm;
+  line-height: 1.3;
+}
+
+.step p {
+  font-size: 6.5pt;
+  color: #444;
+  line-height: 1.4;
+}
+
+/* ── Who benefits ── */
+.who-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 3mm;
+}
+
+.who-card {
+  display: flex;
+  gap: 3mm;
+  align-items: flex-start;
+  padding: 3mm 4mm;
+  background: #f7f9ff;
+  border: 1px solid #dde6f8;
+  border-radius: 3px;
+}
+
+.who-card .icon {
+  font-size: 14pt;
+  min-width: 8mm;
+  text-align: center;
+}
+
+.who-card .w-title {
+  font-size: 8.5pt;
+  font-weight: 700;
+  color: #0f1b35;
+  margin-bottom: 1mm;
+}
+
+.who-card p {
+  font-size: 7.5pt;
+  color: #444;
+  line-height: 1.5;
+}
+
+/* ── Industry impact ── */
+.impact-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 3mm;
+}
+
+.impact-card {
+  background: #0f1b35;
+  color: #fff;
+  border-radius: 4px;
+  padding: 4mm;
+  text-align: center;
+}
+
+.impact-card .big {
+  font-size: 18pt;
+  font-weight: 800;
+  color: #7eb3e8;
+  line-height: 1.1;
+}
+
+.impact-card .impact-label {
+  font-size: 7.5pt;
+  color: #a8c4e0;
+  margin-top: 1.5mm;
+  line-height: 1.4;
+}
+
+/* ── Bottom statement ── */
+.bottom-statement {
+  background: #0f1b35;
+  color: #a8c4e0;
+  border-radius: 4px;
+  padding: 5mm 6mm;
+  margin-top: 5mm;
+  text-align: center;
+}
+
+.bottom-statement .bs-text {
+  font-size: 9.5pt;
+  line-height: 1.7;
+  color: #c8d8ec;
+}
+
+.bottom-statement .bs-text strong {
+  color: #ffffff;
+}
+
+/* ── Footer ── */
+.footer {
+  background: #0f1b35;
+  color: #a8c4e0;
+  padding: 4mm 12mm;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 6mm;
+}
+
+.footer .left {
+  font-size: 7.5pt;
+  line-height: 1.8;
+}
+
+.footer .left span { color: #7eb3e8; font-weight: 600; }
+
+.footer .right {
+  text-align: right;
+  font-size: 7.5pt;
+  line-height: 1.8;
+}
+
+.footer .badge {
+  display: inline-block;
+  background: #3a7bd5;
+  color: #fff;
+  font-size: 6.5pt;
+  font-weight: 700;
+  padding: 0.5mm 2mm;
+  border-radius: 2px;
+  letter-spacing: 0.5px;
+  margin-top: 1mm;
+}
+
+@media print {
+  body { width: 210mm; }
+}
+
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="header">
+  <div class="header-left">
+    <div class="tag">Purpose &amp; Industry Value</div>
+    <h1>UAV Flight Analyzer</h1>
+    <div class="sub">Why This Tool Exists and Why It Matters</div>
+  </div>
+  <div class="header-right">
+    Version 1.0 &nbsp;|&nbsp; April 2026<br>
+    ArduPilot DataFlash .BIN<br>
+    Quadcopter &bull; VTOL &bull; Fixed-Wing
+  </div>
+</div>
+<div class="accent-bar"></div>
+
+<!-- HERO -->
+<div class="hero">
+  <div class="question">After every UAV mission — how do you know the aircraft is safe to fly again?</div>
+  <div class="answer">
+    ArduPilot flight controllers log thousands of data points every second. That raw .BIN file on the SD card contains
+    everything needed to assess flight health — battery condition, motor balance, vibration, GPS integrity, control
+    performance, and more. The problem is that almost nobody reads it properly, because doing so manually
+    requires specialist tools, deep ArduPilot knowledge, and up to an hour per flight. Most teams skip it entirely
+    and fly again on assumption. <strong>UAV Flight Analyzer changes that.</strong>
+  </div>
+</div>
+
+<!-- BODY -->
+<div class="body">
+
+  <!-- THE PROBLEM -->
+  <div class="section-title">The Problem — Why Manual Log Review Fails</div>
+  <div class="problem-grid">
+
+    <div class="problem-card">
+      <div class="p-title">Time Cost</div>
+      <p>Thorough manual review of a single .BIN log takes 30–60 minutes using Mission Planner or MAVExplorer. Across a fleet of 10 drones flying daily, this is operationally impossible.</p>
+    </div>
+
+    <div class="problem-card">
+      <div class="p-title">Expertise Barrier</div>
+      <p>Interpreting telemetry data requires deep ArduPilot knowledge. Most operators and field technicians lack the training to identify degradation patterns in raw log data.</p>
+    </div>
+
+    <div class="problem-card">
+      <div class="p-title">No Standardisation</div>
+      <p>Without defined thresholds, two engineers reviewing the same log will reach different conclusions. Grounding decisions become subjective rather than data-driven.</p>
+    </div>
+
+    <div class="problem-card">
+      <div class="p-title">Silent Degradation</div>
+      <p>Battery internal resistance rises gradually. Vibration increases slowly. Motor imbalance builds flight by flight. Without trend tracking, degradation is invisible until it causes a failure.</p>
+    </div>
+
+  </div>
+
+  <!-- HOW IT WORKS -->
+  <div class="section-title">How UAV Flight Analyzer Solves It</div>
+  <div class="steps">
+
+    <div class="step">
+      <div class="num">1</div>
+      <div class="s-title">Upload .BIN Log</div>
+      <p>Drop the raw DataFlash file from the flight controller SD card into the web interface.</p>
+    </div>
+
+    <div class="step">
+      <div class="num">2</div>
+      <div class="s-title">18 Modules Run</div>
+      <p>Battery, motors, vibration, GPS, control, efficiency, airspeed, ESC, altitude — all checked automatically.</p>
+    </div>
+
+    <div class="step">
+      <div class="num">3</div>
+      <div class="s-title">Score &amp; Grade</div>
+      <p>Weighted health score 0–100 with A–F grade. 110+ issue codes with observed values and thresholds.</p>
+    </div>
+
+    <div class="step">
+      <div class="num">4</div>
+      <div class="s-title">Recommendations</div>
+      <p>Prioritised, specific maintenance actions generated from every detected issue — not generic advice.</p>
+    </div>
+
+    <div class="step">
+      <div class="num">5</div>
+      <div class="s-title">Fleet Trends</div>
+      <p>Linear regression across flight history flags rising battery IR, vibration growth, or score decline before failure.</p>
+    </div>
+
+  </div>
+
+  <!-- WHO BENEFITS -->
+  <div class="section-title">Who Benefits</div>
+  <div class="who-grid">
+
+    <div class="who-card">
+      <div class="icon">🧑‍✈️</div>
+      <div>
+        <div class="w-title">Flight Operator</div>
+        <p>Get a clear go / no-go signal after every mission in under a minute. No technical expertise required to read the output.</p>
+      </div>
+    </div>
+
+    <div class="who-card">
+      <div class="icon">🔧</div>
+      <div>
+        <div class="w-title">Maintenance Engineer</div>
+        <p>Receive specific issue codes with exact values and thresholds. Know which component to inspect and why — not a vague "check everything."</p>
+      </div>
+    </div>
+
+    <div class="who-card">
+      <div class="icon">📊</div>
+      <div>
+        <div class="w-title">Fleet Manager</div>
+        <p>Monitor health trends across all drones. Get automated alerts when a metric is deteriorating — schedule maintenance before a failure, not after.</p>
+      </div>
+    </div>
+
+    <div class="who-card">
+      <div class="icon">🔬</div>
+      <div>
+        <div class="w-title">R&amp;D / Test Engineer</div>
+        <p>Compare flight scores before and after firmware or hardware changes. JSON output integrates directly into automated test pipelines.</p>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- INDUSTRY IMPACT -->
+  <div class="section-title">Industry Impact</div>
+  <div class="impact-grid">
+
+    <div class="impact-card">
+      <div class="big">18</div>
+      <div class="impact-label">Health domains analysed automatically per flight — battery, propulsion, navigation, control, and more</div>
+    </div>
+
+    <div class="impact-card">
+      <div class="big">110+</div>
+      <div class="impact-label">Stable issue codes covering every detectable fault condition across all supported vehicle types</div>
+    </div>
+
+    <div class="impact-card">
+      <div class="big">&lt; 60s</div>
+      <div class="impact-label">From log upload to full health score, grade, and prioritised maintenance recommendations</div>
+    </div>
+
+  </div>
+
+  <!-- BOTTOM STATEMENT -->
+  <div class="bottom-statement">
+    <div class="bs-text">
+      In UAV operations — survey, inspection, defense, and cargo —
+      <strong>an undetected fault mid-mission is not just an equipment loss.</strong>
+      It is a safety event, a mission failure, and a reputational risk.<br><br>
+      UAV Flight Analyzer shifts post-flight review from a manual expert task into a
+      <strong>standardised, automated, data-driven process</strong> that any operator can run in under a minute —
+      on any laptop, with no internet connection, at no cost.
+    </div>
+  </div>
+
+</div>
+
+<!-- FOOTER -->
+<div class="footer">
+  <div class="left">
+    <span>UAV Flight Analyzer</span> — Automated ArduPilot Log Analysis &amp; Fleet Health Monitoring<br>
+    Feedback &amp; bug reports: <span>nagasurya@aereo.io</span><br>
+    <span class="badge">Built with Claude AI</span>
+  </div>
+  <div class="right">
+    Open Source &bull; Free to Use &bull; Fully Offline<br>
+    github.com/NAGASURYA444/UAV-Flight-Analyzer<br>
+    github.com/NAGASURYA444/UAV-Flight-Analyzer/issues
+  </div>
+</div>
+
+</body>
+</html>
