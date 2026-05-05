@@ -10,6 +10,7 @@ env/
 *.BIN
 *.bin
 *.log
+Log_files/
 
 # Generated reports (re-created on analysis)
 *_report.json
@@ -20,6 +21,8 @@ reports/
 fleet.db
 fleet.db-shm
 fleet.db-wal
+*.db-shm
+*.db-wal
 
 # Temp / debug files
 bad_chars.txt
@@ -30,9 +33,14 @@ quad_full.txt
 non_ascii.txt
 Phase _run_report/
 
+# Browser / automation cache (Edge headless, Playwright, etc.)
+.edge-headless/
+Dashboard/
+
 # Claude Code workspace settings (local only)
 .claude/
 
 # OS
 .DS_Store
 Thumbs.db
+desktop.ini

@@ -11,62 +11,65 @@ A local web application for analyzing ArduPilot `.bin` DataFlash logs, scoring f
 - Flight health score with A–F grade
 - Downloadable HTML report per flight
 - Fleet dashboard with trend graphs and maintenance alerts
-- Fully local — no internet required, data never leaves your machine
+- Fully local — no internet required after first setup, data never leaves your machine
+
+---
+
+## Quick Start — Windows
+
+**Double-click `run.bat`** — that's it.
+
+The launcher handles everything automatically:
+
+1. Detects a compatible Python (3.10–3.13) or installs Python 3.13 via winget
+2. Creates an isolated `.venv` virtual environment on first run
+3. Downloads and installs all dependencies (takes 1–2 min the first time)
+4. Starts the server and opens `http://localhost:5000` in your browser
+
+**Every run after the first:** double-click `run.bat` again — starts in seconds.
+
+> **Note:** Python 3.14 (alpha) is intentionally skipped — it has a known DLL
+> incompatibility with `pydantic_core` on Windows. The launcher targets 3.10–3.13.
+
+---
+
+## Quick Start — macOS / Linux
+
+```bash
+# Clone and enter the project
+git clone https://github.com/NAGASURYA444/UAV-Flight-Analyzer.git
+cd UAV-Flight-Analyzer
+
+# Create a virtual environment and install dependencies
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+
+# Start the server
+python run_web.py
+```
+
+Then open **http://localhost:5000** in your browser.
 
 ---
 
 ## Requirements
 
-- Python 3.10 or newer
-- Windows / macOS / Linux
-
----
-
-## Setup (First Time)
-
-**1. Clone the repository**
-```bash
-git clone https://github.com/NAGASURYA444/UAV-Flight-Analyzer.git
-cd UAV-Flight-Analyzer
-```
-
-**2. (Recommended) Create a virtual environment**
-```bash
-python -m venv venv
-
-# Windows
-venv\Scripts\activate
-
-# macOS / Linux
-source venv/bin/activate
-```
-
-**3. Install dependencies**
-```bash
-pip install -r requirements.txt
-```
-
-**4. Start the server**
-```bash
-python run_web.py
-```
-
-**5. Open your browser**
-```
-http://localhost:5000
-```
+| Platform | Requirement |
+|---|---|
+| Windows | Python 3.10–3.13 (auto-installed by `run.bat` if missing) |
+| macOS / Linux | Python 3.10–3.13 installed manually |
+| All | Internet connection on first run (to download dependencies) |
 
 ---
 
 ## Daily Use
 
-After the first-time setup, just run:
-```bash
-# Activate virtual environment (if you created one)
-venv\Scripts\activate        # Windows
-source venv/bin/activate     # macOS / Linux
+**Windows:** double-click `run.bat`.
 
-# Start the server
+**macOS / Linux:**
+```bash
+source .venv/bin/activate
 python run_web.py
 ```
 
@@ -113,12 +116,11 @@ Fleet data is stored locally in `fleet.db` (SQLite — auto-created on first ana
 
 ## Updating
 
-To get the latest version:
 ```bash
 git pull
-pip install -r requirements.txt   # only if dependencies changed
-python run_web.py
 ```
+
+Then double-click `run.bat` (Windows) or run `pip install -r requirements.txt && python run_web.py` (macOS/Linux). The launcher automatically reinstalls dependencies if `requirements.txt` changed.
 
 ---
 
@@ -137,16 +139,16 @@ Logs must be ArduPilot DataFlash `.bin` format (from flight controller SD card).
 ## Troubleshooting
 
 **Port already in use**
-If port 5000 is taken by another app, edit `run_web.py` and change `port=5000` to any free port (e.g. `5001`), then open `http://localhost:5001`.
+`run.bat` will warn you. If port 5000 is taken by another app, edit `run_web.py` and change `port=5000` to any free port (e.g. `5001`), then open `http://localhost:5001`.
 
-**Missing dependencies**
-```bash
-pip install -r requirements.txt
-```
+**Dependencies not installing**
+Delete the `.venv` folder and double-click `run.bat` again — it will rebuild from scratch.
 
 **pymavlink install fails on Windows**
-Install Microsoft C++ Build Tools first:
-https://visualstudio.microsoft.com/visual-cpp-build-tools/
+`run.bat` handles this automatically using pre-built binary wheels. If you are installing manually, use:
+```bash
+pip install -r requirements.txt --only-binary=pymavlink
+```
 
 **Log not parsing**
 Make sure the file is a raw DataFlash `.bin` from the SD card — not a `.tlog` (telemetry log) or `.log` (text log).
@@ -157,7 +159,8 @@ Make sure the file is a raw DataFlash `.bin` from the SD card — not a `.tlog` 
 
 ```
 UAV-Flight-Analyzer/
-├── run_web.py              # Start the web server
+├── run.bat                 # Windows one-click launcher
+├── run_web.py              # Start the web server (used by run.bat)
 ├── cli.py                  # Command-line interface (optional)
 ├── requirements.txt
 ├── profiles/               # Airframe YAML profiles
