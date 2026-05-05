@@ -17,16 +17,29 @@ A local web application for analyzing ArduPilot `.bin` DataFlash logs, scoring f
 
 ## Quick Start — Windows
 
-**Double-click `run.bat`** — that's it.
+**Step 1 — Get the project** (one time only)
 
-The launcher handles everything automatically:
+Option A — using Git:
+```bash
+git clone https://github.com/NAGASURYA444/UAV-Flight-Analyzer.git
+cd UAV-Flight-Analyzer
+```
+
+Option B — no Git needed:
+1. Click the green **Code** button on this page → **Download ZIP**
+2. Extract the ZIP anywhere on your machine (e.g. `C:\UAV-Flight-Analyzer`)
+3. Open that folder
+
+**Step 2 — Double-click `run.bat`**
+
+The launcher handles everything from here automatically:
 
 1. Detects a compatible Python (3.10–3.13) or installs Python 3.13 via winget
 2. Creates an isolated `.venv` virtual environment on first run
 3. Downloads and installs all dependencies (takes 1–2 min the first time)
 4. Starts the server and opens `http://localhost:5000` in your browser
 
-**Every run after the first:** double-click `run.bat` again — starts in seconds.
+**Every run after the first:** just double-click `run.bat` again — starts in seconds.
 
 > **Note:** Python 3.14 (alpha) is intentionally skipped — it has a known DLL
 > incompatibility with `pydantic_core` on Windows. The launcher targets 3.10–3.13.
